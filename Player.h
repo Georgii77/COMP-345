@@ -3,6 +3,7 @@
 #define PLAYER_H
 
 #include <iostream>
+#include <vector>
 #include "Map.h"
 #include "Card.h"
 #include "Orders.h"
