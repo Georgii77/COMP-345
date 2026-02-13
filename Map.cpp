@@ -1,15 +1,18 @@
 #include "Map.h"
-
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
 // Territory class implementation
 
 Territory::Territory() : id(-1), name(""), armySize(0), player(nullptr), continent(nullptr) {}
 
 Territory::Territory(int id, const std::string& name, int armySize, Player* player, Continent* continent) {
-	this.id = id;
-	this.name = name;
-	this.armySize = armySize;
-	this.player = player;
-	this.continent = continent;
+	this -> id = id;
+	this -> name = name;
+	this -> armySize = armySize;
+	this -> player = player;
+	this -> continent = continent;
 }
 
 Territory::Territory(const Territory& t)         
@@ -208,4 +211,194 @@ std::ostream& operator<<(std::ostream& outs, const Map& m) {
     }
 
     return outs;
+}
+
+static std::string trim(const std::string& line) {
+    int index = 0;
+    while (index < line.size() &&
+        (line[index] == ' ' || line[index] == '\t' || line[index] == '\r' || line[index] == '\n')) {
+        index++;
+    }
+    if (index == line.size()) return "";
+
+    int end = line.size() - 1;
+    while (end > index &&
+        (line[end] == ' ' || line[end] == '\t' || line[end] == '\r' || line[end] == '\n')) {
+        end--;
+    }
+    return line.substr(index, end - index + 1);
+}
+
+static void addAdjacentUnique(Territory* a, Territory* b) {
+    if (a == nullptr || b == nullptr) return;
+
+    const std::vector<Territory*>& adjs = a->getAdjacents();
+    for (Territory* t : adjs) {
+        if (t == b) return;
+    }
+    a->addAdjacent(b);
+}
+
+Map* MapLoader::loadMap(const std::string& filename) const {
+
+    std::ifstream input;
+    input.open(filename);
+
+    if (!input.good()) {
+        input.close();
+        return nullptr;
+    }
+
+    Map* newMap = new Map();
+
+    std::string section = "";
+
+    std::vector<Continent*> continentById;
+    continentById.push_back(nullptr);
+
+    std::string line;
+    while (std::getline(input, line)) {
+        line = trim(line);
+
+        if (line.empty()) continue;
+        if (line[0] == ';') continue;
+
+        
+        if (line == "[continents]") 
+        { 
+          section = "continents";
+        }else if(line == "[countries]")
+        {
+          section = "countries";}
+        else if(line == "[borders]")
+        { 
+          section = "borders";}
+        else if(line == "[files]") 
+        { 
+          section = "";
+        }
+
+        if (section == "continents") {
+
+            std::string name = "";
+            std::string armyCount = "";
+
+            int i = 0;
+
+           
+            while (i < (int)line.size() && (line[i] == ' ' || line[i] == '\t')) 
+                i++;
+            while (i < (int)line.size() && !(line[i] == ' ' || line[i] == '\t')) 
+                name += line[i++];
+
+            
+            while (i < (int)line.size() && (line[i] == ' ' || line[i] == '\t'))
+                i++;
+            while (i < (int)line.size() && !(line[i] == ' ' || line[i] == '\t')) 
+                armyCount += line[i++];
+
+            if (!name.empty()) {
+                Continent* c = new Continent(name);
+                newMap->addContinent(c);
+                continentById.push_back(c);
+            }
+        }
+        else if (section == "countries") {
+
+            std::vector<std::string> parts;
+            std::string cur = "";
+
+            for (int i = 0; i < (int)line.size(); i++) {
+                char ch = line[i];
+                if (ch == ' ' || ch == '\t') {
+                    if (!cur.empty()) {
+                        parts.push_back(cur);
+                        cur = "";
+                    }
+                }
+                else {
+                    cur += ch;
+                }
+            }
+            if (!cur.empty()) parts.push_back(cur);
+
+            if (parts.size() < 5) continue;
+
+            int id = std::stoi(parts[0]);
+            std::string name = parts[1];
+            int contId = std::stoi(parts[2]);
+
+            if (id <= 0) continue;
+            if (name.empty()) continue;
+            if (contId <= 0 || contId >= (int)continentById.size()) continue;
+
+            Continent* c = continentById[contId];
+
+            Territory* t = new Territory(id, name, 0, nullptr, c);
+            newMap->addTerritory(t);
+
+            if (c != nullptr) {
+                c->addTerritory(t);
+            }
+        }
+        else if (section == "borders") {
+
+            std::vector<int> nums;
+            int i = 0;
+
+            while (i < (int)line.size()) {
+                while (i < (int)line.size() && (line[i] == ' ' || line[i] == '\t')) i++;
+                if (i >= (int)line.size()) break;
+
+                int val = 0;
+                bool hasDigit = false;
+                while (i < (int)line.size() && line[i] >= '0' && line[i] <= '9') {
+                    hasDigit = true;
+                    val = val * 10 + (line[i] - '0');
+                    i++;
+                }
+                if (hasDigit) nums.push_back(val);
+
+                while (i < (int)line.size() && !(line[i] == ' ' || line[i] == '\t')) i++;
+            }
+
+            if (nums.size() < 2) continue;
+
+            int id = nums[0];
+            Territory* from = newMap->findTerritoryById(id);
+            if (from == nullptr) continue;
+
+            for (int k = 1; k < (int)nums.size(); k++) {
+                Territory* to = newMap->findTerritoryById(nums[k]);
+                if (to == nullptr) continue;
+
+                addAdjacentUnique(from, to);
+                addAdjacentUnique(to, from);
+            }
+        }
+    }
+
+    input.close();
+
+    if (!newMap->validate()) {
+        delete newMap;
+        return nullptr;
+    }
+
+    std::cout << *newMap ;
+
+    return newMap;
+}
+
+
+MapLoader::MapLoader() {}
+
+
+MapLoader::MapLoader(const MapLoader& ml) {}
+
+MapLoader& MapLoader::operator=(const MapLoader& ml) { return *this; }
+
+std::ostream& operator<<(std::ostream& os, const MapLoader& ml) {
+    os << "";
+    return os;
 }
