@@ -13,10 +13,20 @@ using namespace std;
 class Player{
     public:
         Player();
-        player(const Player& p);
+        Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand);
+        Player(const Player& p);
         Player& operator=(const Player& p);
-        friend ostream& operator<<(ostream& out, const Player& p);
         ~Player();
-}
+        friend ostream& operator<<(ostream& out, const Player& p);
+
+        vector<Territory*> toDefend();
+        vector<Territory*> toAttack();
+        void issueOrder(Order* order);  
+        
+    private:
+        vector<Territory*>* territories;
+        OrdersList* ordersList;
+        Hand* hand;
+};
 
 #endif
