@@ -41,3 +41,8 @@
 *.dwo
 /.vs
 /test.text
+
+# build files
+build/
+cmake-build-*/
+CMakeLists.txt
