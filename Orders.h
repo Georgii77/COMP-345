@@ -122,9 +122,11 @@ private:
 
 public:
     OrdersList();
+    ~OrdersList();
     OrdersList(const OrdersList& other);
     OrdersList& operator=(const OrdersList& other);
     
+    void add(Order *order); // Needed since OrdersList isn't a vector. Rather, it uses a vector.
     void move(size_t fromIndex, size_t toIndex);
     void remove(size_t index);
     friend std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList);

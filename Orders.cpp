@@ -20,11 +20,15 @@ Order::Order(const Order& other){
 Order::~Order () {}
 
 // Assignment Operator
-// Order& operator=(const Order& other){
-//     if (this != &other){
-//         this
-//     }
-// }
+Order& Order::operator=(const Order& other){
+    if (this != &other){
+        this->description = other.description;
+        this->effect = other.effect;
+        this->executed = other.executed;
+    }
+    
+    return *this;
+}
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Order& order){
@@ -56,16 +60,17 @@ Deploy& Deploy::operator=(const Deploy& other){
 
 // Validate Method
 bool Deploy::validate(){
+    if(this->target == nullptr || this->armyCount <= 0) return false;
     
-    
-    return false;
+    this->target->setArmySize(this->target->getArmySize() + this->armyCount);
+    return true;
 }
 
 // Execute Method
 void Deploy::execute(){
     if(validate()){
         this->executed = true;
-        std::cout << "Order Executed!" << std::endl;
+        std::cout << "Deploy Order Executed!" << std::endl;
     }
 }
 
@@ -101,16 +106,27 @@ Advance& Advance::operator=(const Advance& other){
 
 // Validate Method
 bool Advance::validate(){
+    if(this->source == nullptr ||this->target == nullptr || this->armyCount <= 0) return false;
     
+    bool areAdjacent = false;
+    for(Territory* t : this->source->getAdjacents()){
+        if(t->getId() == this->target->getId()){
+            areAdjacent = true;
+        }
+    }
     
-    return false;
+    if(!areAdjacent) return false;
+    
+    this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+    this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
+    return true;
 }
 
 // Execute Method
 void Advance::execute(){
     if(validate()){
         this->executed = true;
-        std::cout << "Order Executed!" << std::endl;
+        std::cout << "Advance Order Executed!" << std::endl;
     }
 }
 
@@ -141,7 +157,14 @@ Bomb& Bomb::operator=(const Bomb& other){
 
 // Validate Method
 bool Bomb::validate(){
-    //check adjacency
+    if(this->target == nullptr) return false;
+    
+    // Check if target doesn't belong to the issuing Player
+    
+    // Check if Player's territories are adjacent to target
+    
+    // If it's adjacent:
+    //      then this->target->setArmySize(this->target->getArmySize() / 2);
     
     return false;
 }
@@ -150,7 +173,7 @@ bool Bomb::validate(){
 void Bomb::execute(){
     if(validate()){
         this->executed = true;
-        std::cout << "Order Executed!" << std::endl;
+        std::cout << "Bomb Order Executed!" << std::endl;
     }
 }
 
@@ -182,16 +205,22 @@ Blockade& Blockade::operator=(const Blockade& other){
 
 // Validate Method
 bool Blockade::validate(){
+    if(this->target == nullptr) return false;
     
+    // Check if target belongs to this Player
+    // 
+    // If it belongs to them:
+    //      this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
+    //      Set Territory to neutral
     
-    return false;
+    return true;
 }
 
 // Execute Method
 void Blockade::execute(){
     if(validate()){
         this->executed = true;
-        std::cout << "Order Executed!" << std::endl;
+        std::cout << "Blockade Order Executed!" << std::endl;
     }
 }
 
@@ -225,19 +254,22 @@ Airlift& Airlift::operator=(const Airlift& other){
     return *this;
 }
 
-
 // Validate Method
 bool Airlift::validate(){
+    if(this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
     
-    
-    return false;
+    // Check if this->source belongs to this Player
+    this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+    this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
+
+    return true;
 }
 
 // Execute Method
 void Airlift::execute(){
     if(validate()){
         this->executed = true;
-        std::cout << "Order Executed!" << std::endl;
+        std::cout << "Airlift Order Executed!" << std::endl;
     }
 }
 
@@ -276,6 +308,8 @@ bool Negotiate::validate(){
     else {
         return true;
     }
+    
+    // Prevent attacks between the 2 players until the end of the turn
 }
 
 // Execute Method
@@ -294,25 +328,32 @@ std::ostream& operator <<(std::ostream& os, const Negotiate& order){
 
 // OrdersList Class
 // Default Constructor
-OrdersList::OrdersList(){
-    std::vector<Order*> orders; // Create an empty vector
+OrdersList::OrdersList(){}
+
+OrdersList::~OrdersList(){
+    for(Order *order : orders){
+        delete order;
+    }
 }
 
 // Copy Constructor
-// OrdersList::OrdersList(const OrdersList& other){
-//     // for (Order* order : orders){
-//     //     other.orders->push_back(order);
-//     // }
-//     // 
-//     other.orders
-// }
+OrdersList::OrdersList(const OrdersList& other){
+    this->orders = other.orders;
+}
 
 // Assignment Operator
-// OrdersList& OrdersList::operator=(const OrdersList& other){
-//     if (this != &other){
-        
-//     }
-// }
+OrdersList& OrdersList::operator=(const OrdersList& other){
+    if (this != &other){
+        this->orders = other.orders;
+    }
+    
+    return *this;
+}
+
+// Add method (To add orders to the list)
+void OrdersList::add(Order *order){
+    orders.push_back(order);
+}
 
 // Move Method
 void OrdersList::move(size_t fromIndex, size_t toIndex){
@@ -330,7 +371,11 @@ void OrdersList::remove(size_t index){
 }
 
 // Stream Insertion Operator
-std::ostream& operator <<(std::ostream& os, const OrdersList& order){
-    // os << for()
-    // return os;
+std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList){
+    os << "Orders: " << std::endl;
+    for(Order* order : ordersList.orders){
+        os << *order << std::endl;
+    }
+    
+    return os;
 }
