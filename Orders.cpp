@@ -161,7 +161,7 @@ bool Bomb::validate(){
     
     // Check if target doesn't belong to the issuing Player
     
-    // Check if Player's territories are adjacent to target
+    // Check if any of the Player's territories are adjacent to target
     
     // If it's adjacent:
     //      return true;
@@ -357,7 +357,24 @@ void OrdersList::add(Order *order){
 
 // Move Method
 void OrdersList::move(size_t fromIndex, size_t toIndex){
+    if(fromIndex == toIndex) return;
     
+    size_t listSize = orders.size();
+    if(fromIndex >= listSize) {
+        std::cout << "Invalid fromIndex. The ordersList size is: " << listSize << "." << std::endl;
+        return;
+    }
+    
+    if(toIndex >= listSize) {
+        std::cout << "Invalid toIndex. The ordersList size is: " << listSize << "." << std::endl;
+        return;
+    }
+    
+    Order* order_to_move = this->orders.at(fromIndex);
+    this->orders.erase(this->orders.begin() + fromIndex);
+    
+    //Add at index
+    this->orders.insert(this->orders.begin() + toIndex, order_to_move);
 }
 
 // Remove Method
