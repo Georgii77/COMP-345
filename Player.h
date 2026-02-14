@@ -23,6 +23,10 @@ class Player{
         vector<Territory*> toAttack();
         void issueOrder(Order* order);  
         
+        Hand* getHand();
+        OrdersList* getOrdersList();
+        vector<Territory*>* getTerritories();
+        
     private:
         vector<Territory*>* territories;
         OrdersList* ordersList;
