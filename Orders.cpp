@@ -62,13 +62,13 @@ Deploy& Deploy::operator=(const Deploy& other){
 bool Deploy::validate(){
     if(this->target == nullptr || this->armyCount <= 0) return false;
     
-    this->target->setArmySize(this->target->getArmySize() + this->armyCount);
     return true;
 }
 
 // Execute Method
 void Deploy::execute(){
     if(validate()){
+        this->target->setArmySize(this->target->getArmySize() + this->armyCount);
         this->executed = true;
         std::cout << "Deploy Order Executed!" << std::endl;
     }
@@ -117,14 +117,14 @@ bool Advance::validate(){
     
     if(!areAdjacent) return false;
     
-    this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-    this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
     return true;
 }
 
 // Execute Method
 void Advance::execute(){
     if(validate()){
+        this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+        this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
         this->executed = true;
         std::cout << "Advance Order Executed!" << std::endl;
     }
@@ -164,14 +164,15 @@ bool Bomb::validate(){
     // Check if Player's territories are adjacent to target
     
     // If it's adjacent:
-    //      then this->target->setArmySize(this->target->getArmySize() / 2);
+    //      return true;
     
-    return false;
+    return true;
 }
 
 // Execute Method
 void Bomb::execute(){
     if(validate()){
+        this->target->setArmySize(this->target->getArmySize() / 2);
         this->executed = true;
         std::cout << "Bomb Order Executed!" << std::endl;
     }
@@ -210,8 +211,7 @@ bool Blockade::validate(){
     // Check if target belongs to this Player
     // 
     // If it belongs to them:
-    //      this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
-    //      Set Territory to neutral
+    //      return true
     
     return true;
 }
@@ -219,6 +219,8 @@ bool Blockade::validate(){
 // Execute Method
 void Blockade::execute(){
     if(validate()){
+        // this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
+        // Set Territory to neutral
         this->executed = true;
         std::cout << "Blockade Order Executed!" << std::endl;
     }
@@ -257,10 +259,6 @@ Airlift& Airlift::operator=(const Airlift& other){
 // Validate Method
 bool Airlift::validate(){
     if(this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
-    
-    // Check if this->source belongs to this Player
-    this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-    this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
 
     return true;
 }
@@ -268,6 +266,9 @@ bool Airlift::validate(){
 // Execute Method
 void Airlift::execute(){
     if(validate()){
+        // Check if this->source belongs to this Player
+        this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+        this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
         this->executed = true;
         std::cout << "Airlift Order Executed!" << std::endl;
     }
@@ -305,16 +306,15 @@ bool Negotiate::validate(){
         std::cout << "Invalid Player!" << std::endl;
         return false;
     }
-    else {
-        return true;
-    }
     
-    // Prevent attacks between the 2 players until the end of the turn
+    return true;    
 }
 
 // Execute Method
 void Negotiate::execute(){
     if(validate()){
+        // Prevent attacks between the 2 players until the end of the turn
+        
         this->executed = true;
         std::cout << "Negotiate Order Executed!" << std::endl;
     }
