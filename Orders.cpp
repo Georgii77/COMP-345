@@ -32,7 +32,14 @@ Order& Order::operator=(const Order& other){
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Order& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -73,13 +80,21 @@ void Deploy::execute(){
     if(validate()){
         this->target->setArmySize(this->target->getArmySize() + this->armyCount);
         this->executed = true;
+        this->effect = std::to_string(this->armyCount) + " armies deployed in " + this->target->getName() + ". Current armies in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Deploy Order Executed!" << std::endl;
     }
 }
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Deploy& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -132,13 +147,21 @@ void Advance::execute(){
         this->source->setArmySize(this->source->getArmySize() - this->armyCount);
         this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
         this->executed = true;
+        this->effect = std::to_string(this->armyCount) + " armies advanced from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
         std::cout << "Advance Order Executed!" << std::endl;
     }
 }
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Advance& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -184,13 +207,21 @@ void Bomb::execute(){
     if(validate()){
         this->target->setArmySize(this->target->getArmySize() / 2);
         this->executed = true;
+        this->effect = this->target->getName() + " has been bombed! Current army count in " + this->target->getName() + ": " + std::to_string(this->target->getArmySize());
         std::cout << "Bomb Order Executed!" << std::endl;
     }
 }
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Bomb& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -235,13 +266,21 @@ void Blockade::execute(){
         this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
         // Set Territory to neutral
         this->executed = true;
+        this->effect = this->target->getName() + " has been blockaded and has become a neutral territory. The current army size in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Blockade Order Executed!" << std::endl;
     }
 }
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Blockade& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -286,13 +325,21 @@ void Airlift::execute(){
         this->source->setArmySize(this->source->getArmySize() - this->armyCount);
         this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
         this->executed = true;
+        this->effect = std::to_string(this->armyCount) + " armies airlifted from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
         std::cout << "Airlift Order Executed!" << std::endl;
     }
 }
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Airlift& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -335,13 +382,21 @@ void Negotiate::execute(){
         // Prevent attacks between the 2 players until the end of the turn
         
         this->executed = true;
+        this->effect = "Peace has been successfully negotiated with target player. No attacks allowed between the players until the end of the round!";
         std::cout << "Negotiate Order Executed!" << std::endl;
     }
 }
 
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const Negotiate& order){
-    os << "Order Description: " << order.description << ", the order has been executed: " << order.executed << ", Effect: " << order.effect;
+    os << order.description << " - ";
+    if(order.executed){
+        os << "[Executed] " << "[Effect: " << order.effect << "]";
+    }
+    else {
+        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+    }
+    
     return os;
 }
 
@@ -419,8 +474,11 @@ void OrdersList::executeOrders(){
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList){
     os << "                                    Orders" << std::endl; // Center the word
+    
+    size_t i = 1; 
     for(Order* order : ordersList.orders){
-        os << *order << std::endl;
+        os << "[" << i << "] " << *order << std::endl;
+        i++;
     }
     
     return os;
