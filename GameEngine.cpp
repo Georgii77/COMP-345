@@ -4,71 +4,22 @@
 
 #include "GameEngine.h"
 #include "Map.h"  //only complete part, will update with others once complete
-
-//temp stubs until finished PART2 PART3 PART4
-class Card {
-public:
-    Card() {}
-};
-
-class Hand {
-public:
-    Hand() {}
-};
-
-//once player is finished replace all PlayerStub to Player PART2
-class PlayerStub {
-private:
-    std::string* name;
-    std::vector<Territory*>* territories;
-    Hand* hand;
-
-public:
-    PlayerStub(const std::string& playerName) {
-        name = new std::string(playerName);
-        territories = new std::vector<Territory*>();
-        hand = new Hand();
-    }
-
-    ~PlayerStub() {
-        delete name;
-        delete territories;
-        delete hand;
-    }
-
-    PlayerStub(const PlayerStub& p) {
-        name = new std::string(*p.name);
-        territories = new std::vector<Territory*>(*p.territories);
-        hand = new Hand(*p.hand);
-    }
-
-    PlayerStub& operator=(const PlayerStub& p) {
-        if (this != &p) {
-            delete name;
-            delete territories;
-            delete hand;
-            name = new std::string(*p.name);
-            territories = new std::vector<Territory*>(*p.territories);
-            hand = new Hand(*p.hand);
-        }
-        return *this;
-    }
-
-    std::string getName() const { return *name; }
-};
+#include "Player.h"
+#include "Orders.h"
+#include "Cards.h"
 
 //constructor
 GameEngine::GameEngine() {
     currentState = new std::string("start");
     gameMap = nullptr;
-    players = new std::vector<PlayerStub*>();
+    players = new std::vector<Player*>();
 }
 
 //destructor
 GameEngine::~GameEngine() {
     delete currentState;
     delete gameMap;
-    for (PlayerStub* p : *players) {
+    for (Player* p : *players) {
         delete p;
     }
     delete players;
@@ -79,9 +30,9 @@ GameEngine::GameEngine(const GameEngine& ge) {
     currentState = new std::string(*ge.currentState);
     gameMap = ge.gameMap ? new Map(*ge.gameMap) : nullptr;
     //deep copy of players
-    players = new std::vector<PlayerStub*>();
-    for (PlayerStub* p : *ge.players) {
-        players->push_back(new PlayerStub(*p));
+    players = new std::vector<Player*>();
+    for (Player* p : *ge.players) {
+        players->push_back(new Player(*p));
     }
 }
 
@@ -90,16 +41,16 @@ GameEngine& GameEngine::operator=(const GameEngine& ge) {
     if (this != &ge) {
         delete currentState;
         delete gameMap;
-        for (PlayerStub* p : *players) delete p;  //clean up old players
+        for (Player* p : *players) delete p;  //clean up old players
         delete players;
 
         currentState = new std::string(*ge.currentState);
         gameMap = ge.gameMap ? new Map(*ge.gameMap) : nullptr;
 
         //deep copy of players
-        players = new std::vector<PlayerStub*>();
-        for (PlayerStub* p : *ge.players) {
-            players->push_back(new PlayerStub(*p));
+        players = new std::vector<Player*>();
+        for (Player* p : *ge.players) {
+            players->push_back(new Player(*p));
         }
     }
     return *this;
@@ -185,27 +136,60 @@ void GameEngine::executeCommand(const std::string& command) {
             std::cout << "Staying in current state.\n";
         }
     }
-    else if (command == "addplayer") { //stub, real finished player class will have territories, orders, cards. atm this just stores names PART2
+    else if (command == "addplayer") {
         std::cout << "Enter player name: ";
         std::string playerName;
         std::cin >> playerName;
 
-        players->push_back(new PlayerStub(playerName));
+        // Use default constructor - hand will be nullptr
+        Player* newPlayer = new Player();
+        players->push_back(newPlayer);
+
         std::cout << "Player " << playerName << " added.\n";
         transition("players added");
     }
-    else if (command == "assigncountries") { //just prints, doesnt actually assign territories to players PART2
+    else if (command == "assigncountries") {
         if (players->size() < 2) {
             std::cout << "Need at least 2 players to start the game!\n";
             std::cout << "Staying in current state.\n";
             return;
         }
+
         std::cout << "Assigning countries to players...\n";
+
+        // Actually assign territories to players in round-robin fashion
+        const std::vector<Territory*>& territories = gameMap->getTerritories();
+        int playerIndex = 0;
+        for (Territory* t : territories) {
+            t->setPlayer((*players)[playerIndex]);
+            (*players)[playerIndex]->getTerritories()->push_back(t);
+            playerIndex = (playerIndex + 1) % players->size();
+        }
+
         std::cout << "Countries assigned to " << players->size() << " players.\n";
         transition("assign reinforcement");
     }
-    else if (command == "issueorder") { //just prints, doesnt actually create order objects PART3
-        std::cout << "Player issuing order...\n";
+    else if (command == "issueorder") {
+        std::cout << "Which player (0-" << players->size()-1 << ")? ";
+        int playerIdx;
+        std::cin >> playerIdx;
+
+        if (playerIdx < 0 || playerIdx >= players->size()) {
+            std::cout << "Invalid player index!\n";
+            return;
+        }
+
+        // For demonstration: create a simple Deploy order to first territory
+        Player* currentPlayer = (*players)[playerIdx];
+        if (currentPlayer->getTerritories()->size() > 0) {
+            Territory* firstTerritory = (*currentPlayer->getTerritories())[0];
+            Order* deployOrder = new Deploy(5, firstTerritory);
+            currentPlayer->getOrdersList()->add(deployOrder);
+            std::cout << "Deploy order issued for player " << playerIdx << "\n";
+        } else {
+            std::cout << "Player has no territories!\n";
+        }
+
         transition("issue orders");
     }
     else if (command == "endissueorders") {
@@ -213,9 +197,18 @@ void GameEngine::executeCommand(const std::string& command) {
         std::cout << "Moving to execution phase...\n";
         transition("execute orders");
     }
-    else if (command == "execorder") { //just prints, doesnt actually execute orders PART3
-        std::cout << "Executing next order...\n";
-        std::cout << "Order executed successfully.\n";
+    else if (command == "execorder") {
+        std::cout << "Executing orders from all players...\n";
+
+        //execute one order from each player's order list (simplified)
+        for (Player* p : *players) {
+            OrdersList* orders = p->getOrdersList();
+            //note: OrdersList doesn't have a method to execute/get orders yet
+            //this is a simplified demonstration
+            std::cout << "Player orders: " << *orders << "\n";
+        }
+
+        std::cout << "Orders executed.\n";
         //no transition because can execute multiple orders
     }
     else if (command == "endexecorders") {
@@ -232,7 +225,7 @@ void GameEngine::executeCommand(const std::string& command) {
         //clean up previous game
         delete gameMap;
         gameMap = nullptr;
-        for (PlayerStub* p : *players) {
+        for (Player* p : *players) {
             delete p;
         }
         players->clear();

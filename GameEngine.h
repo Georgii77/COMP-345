@@ -9,18 +9,13 @@
 #include <string>
 #include <vector>
 #include "Map.h"
-//#include "Player.h" PART2
-//#include "Orders.h" PART3
-//#include "Cards.h" PART4
-
-class PlayerStub; //temp stub class to be deleted when player is complete PART2
+#include "Player.h"
 
 class GameEngine {
     private:
         std::string* currentState;
         Map* gameMap;
-        //std::vector<Player*>* players; PART2
-        std::vector<PlayerStub*>* players;
+        std::vector<Player*>* players;
 
     public:
         GameEngine();
