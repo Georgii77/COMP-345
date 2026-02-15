@@ -1,5 +1,6 @@
 #include "Orders.h"
 #include "Map.h"
+#include "Player.h"
 #include <cstddef>
 #include <ostream>
 #include <string>
@@ -46,11 +47,11 @@ std::ostream& operator <<(std::ostream& os, const Order& order){
 // Deploy Class Definitions
 // Parameterized Constructor 
 Deploy::Deploy(int armyCount, Territory* target) : armyCount(armyCount), target(target){
-    description = "Deploy " + std::to_string(armyCount) + " armies to " + target->getName();
+    this->description = "Deploy " + std::to_string(armyCount) + " armies to " + target->getName();
 }
 
 // Copy Constructor
-Deploy::Deploy(const Deploy& other){
+Deploy::Deploy(const Deploy& other) : Order(other){
     this->armyCount = other.armyCount;
     this->target = other.target;
 }
@@ -61,6 +62,7 @@ Deploy::~Deploy() {}
 // Assignment Operator
 Deploy& Deploy::operator=(const Deploy& other){
     if(this != &other){
+        Order::operator=(other);
         this->armyCount = other.armyCount;
         this->target = other.target;
     }
@@ -101,11 +103,11 @@ std::ostream& operator <<(std::ostream& os, const Deploy& order){
 // Advance Class Definitions
 // Parameterized Constructor 
 Advance::Advance(int armyCount, Territory* source, Territory* target) : armyCount(armyCount), source(source), target(target) {
-    description = std::to_string(this->armyCount) + " armies advancing from " + this->source->getName() + " to " + this->target->getName();
+    this->description = std::to_string(this->armyCount) + " armies advancing from " + this->source->getName() + " to " + this->target->getName();
 }
 
 // Copy Constructor
-Advance::Advance(const Advance& other){
+Advance::Advance(const Advance& other) : Order(other){
     this->armyCount = other.armyCount;
     this->source = other.source;
     this->target = other.target;
@@ -117,6 +119,7 @@ Advance::~Advance() {}
 // Assignment Operator
 Advance& Advance::operator=(const Advance& other){
     if(this != &other){
+        Order::operator=(other);
         this->armyCount = other.armyCount;
         this->source = other.source;
         this->target = other.target;
@@ -167,12 +170,12 @@ std::ostream& operator <<(std::ostream& os, const Advance& order){
 
 // Bomb Class Definitions
 // Parameterized Constructor 
-Bomb::Bomb(Territory* target) : target(target) {
-    description = "Bombing " + this->target->getName();
+Bomb::Bomb(Territory* target) : target(target){
+    this->description = "Bombing " + this->target->getName();
 }
 
 // Copy Constructor
-Bomb::Bomb(const Bomb& other){
+Bomb::Bomb(const Bomb& other) : Order(other){
     this->target = other.target;
 }
 
@@ -182,6 +185,7 @@ Bomb::~Bomb() {}
 // Assignment Operator
 Bomb& Bomb::operator=(const Bomb& other){
     if(this != &other){
+        Order::operator=(other);
         this->target = other.target;
     }
     
@@ -228,11 +232,11 @@ std::ostream& operator <<(std::ostream& os, const Bomb& order){
 // Blockade Class Definitions
 // Parameterized Constructor 
 Blockade::Blockade(Territory* target) : target(target) {
-    description = "Blockading " + this->target->getName();
+    this->description = "Blockading " + this->target->getName();
 }
 
 // Copy Constructor
-Blockade::Blockade(const Blockade& other){
+Blockade::Blockade(const Blockade& other) : Order(other){
     this->target = other.target;
 }
 
@@ -242,6 +246,7 @@ Blockade::~Blockade() {}
 // Assignment Operator
 Blockade& Blockade::operator=(const Blockade& other){
     if(this != &other){
+        Order::operator=(other);
         this->target = other.target;
     }
     
@@ -287,11 +292,11 @@ std::ostream& operator <<(std::ostream& os, const Blockade& order){
 // Airlift Class Definitions
 // Parameterized Constructor 
 Airlift::Airlift(int armyCount, Territory* source, Territory* target) : armyCount(armyCount), source(source), target(target) {
-    description = "Airlifting " + std::to_string(armyCount) + " armies from " + this->source->getName() + " to " + this->target->getName();
+    this->description = "Airlifting " + std::to_string(armyCount) + " armies from " + this->source->getName() + " to " + this->target->getName();
 }
 
 // Copy Constructor
-Airlift::Airlift(const Airlift& other){
+Airlift::Airlift(const Airlift& other) : Order(other){
     this->armyCount = other.armyCount;
     this->source = other.source;
     this->target = other.target;
@@ -303,6 +308,7 @@ Airlift::~Airlift() {}
 // Assignment Operator
 Airlift& Airlift::operator=(const Airlift& other){
     if(this != &other){
+        Order::operator=(other);
         this->armyCount = other.armyCount;
         this->source = other.source;
         this->target = other.target;
@@ -346,11 +352,11 @@ std::ostream& operator <<(std::ostream& os, const Airlift& order){
 // Negotiate Class Definitions
 // Parameterized Constructor
 Negotiate::Negotiate(Player* targetPlayer) : targetPlayer(targetPlayer) {
-    // description = "Negotiating with " + targetPlayer->getName(); Player class not done yet.
+    // this->description = "Negotiating with Player " + std::to_string(targetPlayer->getID());
 }
 
 // Copy Constructor
-Negotiate::Negotiate(const Negotiate& other){
+Negotiate::Negotiate(const Negotiate& other) : Order(other){
     this->targetPlayer = other.targetPlayer;
 }
 
@@ -360,6 +366,7 @@ Negotiate::~Negotiate() {}
 // Assignment Operator
 Negotiate& Negotiate::operator=(const Negotiate& other){
     if(this != &other){
+        Order::operator=(other);
         this->targetPlayer = other.targetPlayer;
     }
     
@@ -382,7 +389,7 @@ void Negotiate::execute(){
         // Prevent attacks between the 2 players until the end of the turn
         
         this->executed = true;
-        this->effect = "Peace has been successfully negotiated with target player. No attacks allowed between the players until the end of the round!";
+        // this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getID()) + "No attacks allowed between the players until the end of the round!";
         std::cout << "Negotiate Order Executed!" << std::endl;
     }
 }
@@ -460,7 +467,7 @@ void OrdersList::remove(size_t index){
         orders.erase(orders.begin() + index);
     }
     else {
-        std::cout << "Error. Index " << index << " not in list to remove." << std::endl;
+        std::cout << "Error. Index " << index << " is not in the list to remove." << std::endl;
     }
 }
 
