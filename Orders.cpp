@@ -48,6 +48,9 @@ Deploy::Deploy(const Deploy& other){
     this->target = other.target;
 }
 
+// Destructor
+Deploy::~Deploy() {}
+
 // Assignment Operator
 Deploy& Deploy::operator=(const Deploy& other){
     if(this != &other){
@@ -92,6 +95,9 @@ Advance::Advance(const Advance& other){
     this->source = other.source;
     this->target = other.target;
 }
+
+// Destructor
+Advance::~Advance() {}
 
 // Assignment Operator
 Advance& Advance::operator=(const Advance& other){
@@ -146,6 +152,10 @@ Bomb::Bomb(Territory* target) : target(target) {
 Bomb::Bomb(const Bomb& other){
     this->target = other.target;
 }
+
+// Destructor
+Bomb::~Bomb() {}
+
 // Assignment Operator
 Bomb& Bomb::operator=(const Bomb& other){
     if(this != &other){
@@ -195,6 +205,9 @@ Blockade::Blockade(const Blockade& other){
     this->target = other.target;
 }
 
+// Destructor
+Blockade::~Blockade() {}
+
 // Assignment Operator
 Blockade& Blockade::operator=(const Blockade& other){
     if(this != &other){
@@ -219,7 +232,7 @@ bool Blockade::validate(){
 // Execute Method
 void Blockade::execute(){
     if(validate()){
-        // this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
+        this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
         // Set Territory to neutral
         this->executed = true;
         std::cout << "Blockade Order Executed!" << std::endl;
@@ -244,6 +257,9 @@ Airlift::Airlift(const Airlift& other){
     this->source = other.source;
     this->target = other.target;
 }
+
+// Destructor
+Airlift::~Airlift() {}
 
 // Assignment Operator
 Airlift& Airlift::operator=(const Airlift& other){
@@ -291,6 +307,9 @@ Negotiate::Negotiate(const Negotiate& other){
     this->targetPlayer = other.targetPlayer;
 }
 
+// Destructor
+Negotiate::~Negotiate() {}
+
 // Assignment Operator
 Negotiate& Negotiate::operator=(const Negotiate& other){
     if(this != &other){
@@ -330,15 +349,16 @@ std::ostream& operator <<(std::ostream& os, const Negotiate& order){
 // Default Constructor
 OrdersList::OrdersList(){}
 
+// Copy Constructor
+OrdersList::OrdersList(const OrdersList& other){
+    this->orders = other.orders;
+}
+
+// Destructor
 OrdersList::~OrdersList(){
     for(Order *order : orders){
         delete order;
     }
-}
-
-// Copy Constructor
-OrdersList::OrdersList(const OrdersList& other){
-    this->orders = other.orders;
 }
 
 // Assignment Operator
@@ -380,6 +400,8 @@ void OrdersList::move(size_t fromIndex, size_t toIndex){
 // Remove Method
 void OrdersList::remove(size_t index){
     if(index < orders.size()){
+        delete orders[index];
+        orders[index] = nullptr;
         orders.erase(orders.begin() + index);
     }
     else {
@@ -387,9 +409,16 @@ void OrdersList::remove(size_t index){
     }
 }
 
+// Execute Orders Method
+void OrdersList::executeOrders(){
+    for(Order* order : orders){
+        order->execute();
+    }
+}
+
 // Stream Insertion Operator
 std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList){
-    os << "Orders: " << std::endl;
+    os << "                                    Orders" << std::endl; // Center the word
     for(Order* order : ordersList.orders){
         os << *order << std::endl;
     }
