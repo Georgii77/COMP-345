@@ -95,7 +95,7 @@ vector<Territory*> Player::toAttack() {
     return arbitraryList;
 }
 
-void issueOrder(Order* order) {
+void Player::issueOrder(Order* order) {
     ordersList->add(order);
 }
 
