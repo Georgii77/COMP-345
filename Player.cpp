@@ -5,16 +5,22 @@ Player::Player() {
     territories = new vector<Territory*>();
     ordersList = new OrdersList();
     hand = new Hand();
+    id = nullptr;
 }
 
-Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand) {
+Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
     this->territories = new vector<Territory*>(*territories);
     this->ordersList = new OrdersList(*ordersList);
     this->hand = nullptr; //new Hand(*hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
+    if(id == nullptr) {
+        this->id = nullptr;
+    } else {
+        this->id = new int(*id);
+    }
 }
 
 Player::Player(const Player& p){
-    territories = new vector<Territory*>(p.territories);
+    territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
     //hand = new Hand(*p.hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
     if (p.hand != nullptr) {
@@ -22,12 +28,19 @@ Player::Player(const Player& p){
     } else {
         this->hand = nullptr;
     }
+    if(p.id == nullptr) {
+        this->id = nullptr;
+    } else {
+        this->id = new int(*p.id);
+    }
+    
 }
 
 Player::~Player() {
     delete territories;
     delete ordersList;
     delete hand;
+    delete id;
 }
 
 Player& Player::operator=(const Player& p) {
@@ -37,6 +50,7 @@ Player& Player::operator=(const Player& p) {
     delete territories;
     delete ordersList;
     delete hand;
+    delete id;
 
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
@@ -46,12 +60,17 @@ Player& Player::operator=(const Player& p) {
     } else {
         this->hand = nullptr;
     }
-    
+    if(p.id == nullptr) {
+        this->id = nullptr;
+    } else {
+        this->id = new int(*p.id);
+    }
     return *this;
 }
 
 ostream& operator<<(ostream& out, const Player& p){
     out << "Player Information:" << endl;
+    
     out << "  Owned Territories: " << p.territories->size() << endl;
     out << "  Orders in List: " << *p.ordersList << endl; 
     if (p.hand != nullptr) {
@@ -59,6 +78,10 @@ ostream& operator<<(ostream& out, const Player& p){
     } else {
         out << "  Hand: Empty/Null" << endl;
     }
+    if (p.id != nullptr)
+        out << "  ID: " << *p.id << endl;
+    else
+        out << "  ID: none" << endl;
     return out;
 }
 
@@ -84,4 +107,8 @@ OrdersList* Player::getOrdersList() {
 }
 std::vector<Territory*>* Player::getTerritories() {
     return territories;
+}
+
+int* Player::getId() {
+    return id;
 }

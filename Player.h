@@ -13,7 +13,7 @@ using namespace std;
 class Player{
     public:
         Player();
-        Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand);
+        Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id = nullptr);
         Player(const Player& p);
         Player& operator=(const Player& p);
         ~Player();
@@ -26,11 +26,15 @@ class Player{
         Hand* getHand();
         OrdersList* getOrdersList();
         vector<Territory*>* getTerritories();
+
+        int* getId();
+
         
     private:
         vector<Territory*>* territories;
         OrdersList* ordersList;
         Hand* hand;
+        int* id;
 };
 
 #endif
