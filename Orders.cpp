@@ -37,7 +37,7 @@ std::ostream& operator <<(std::ostream& os, const Order& order){
         os << "[Executed] " << "[Effect: " << order.effect << "]";
     }
     else {
-        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+        os << "[Not Executed] [Effect: None]";
     }
     
     return os;
@@ -92,7 +92,7 @@ std::ostream& operator <<(std::ostream& os, const Deploy& order){
         os << "[Executed] " << "[Effect: " << order.effect << "]";
     }
     else {
-        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+        os << "[Not Executed] [Effect: None]";
     }
     
     return os;
@@ -219,7 +219,7 @@ std::ostream& operator <<(std::ostream& os, const Bomb& order){
         os << "[Executed] " << "[Effect: " << order.effect << "]";
     }
     else {
-        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+        os << "[Not Executed] [Effect: None]";
     }
     
     return os;
@@ -278,7 +278,7 @@ std::ostream& operator <<(std::ostream& os, const Blockade& order){
         os << "[Executed] " << "[Effect: " << order.effect << "]";
     }
     else {
-        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+        os << "[Not Executed] [Effect: None]";
     }
     
     return os;
@@ -337,7 +337,7 @@ std::ostream& operator <<(std::ostream& os, const Airlift& order){
         os << "[Executed] " << "[Effect: " << order.effect << "]";
     }
     else {
-        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+        os << "[Not Executed] [Effect: None]";
     }
     
     return os;
@@ -394,7 +394,7 @@ std::ostream& operator <<(std::ostream& os, const Negotiate& order){
         os << "[Executed] " << "[Effect: " << order.effect << "]";
     }
     else {
-        os << "[Not Executed] " << "[Effect: " << order.effect << "]";
+        os << "[Not Executed] [Effect: None]";
     }
     
     return os;
