@@ -4,7 +4,7 @@ using namespace std;
 Player::Player() {
     territories = new vector<Territory*>();
     ordersList = new OrdersList();
-    hand = new Hand();
+    hand = nullptr;;
     id = nullptr;
 }
 
