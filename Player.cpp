@@ -9,13 +9,32 @@ Player::Player() {
 }
 
 Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
-    this->territories = new vector<Territory*>(*territories);
-    this->ordersList = new OrdersList(*ordersList);
-    this->hand = nullptr; //new Hand(*hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
-    if(id == nullptr) {
-        this->id = nullptr;
+    //handle nullptr territories
+    if (territories != nullptr) {
+        this->territories = new vector<Territory*>(*territories);
     } else {
+        this->territories = new vector<Territory*>();
+    }
+
+    //handle nullptr ordersList
+    if (ordersList != nullptr) {
+        this->ordersList = new OrdersList(*ordersList);
+    } else {
+        this->ordersList = new OrdersList();
+    }
+
+    //handle hand
+    if (hand != nullptr) {
+        this->hand = new Hand(*hand);
+    } else {
+        this->hand = nullptr;
+    }
+
+    //handle id
+    if (id != nullptr) {
         this->id = new int(*id);
+    } else {
+        this->id = nullptr;
     }
 }
 
@@ -110,5 +129,8 @@ std::vector<Territory*>* Player::getTerritories() {
 }
 
 int Player::getId() {
+    if (id == nullptr) {
+        return 0;  // Default ID if not set
+    }
     return *id;
 }

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "Map.cpp"
+#include "Map.h"
 
 int main(int argc, char* argv[])
 {

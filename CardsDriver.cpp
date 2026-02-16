@@ -11,8 +11,8 @@ int main() {
     Deck deck(25);
     Hand hand(5, &deck);
 
-    //std::cout << deck << "\n";
-    //std::cout << hand << "\n";
+    std::cout << deck << "\n";
+    std::cout << hand << "\n";
 
     //delete hand;
     //delete deck;
