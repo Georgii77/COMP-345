@@ -18,6 +18,7 @@ public:
     virtual ~Order();
     Order(const Order& other);
     Order& operator=(const Order& other);
+    virtual Order* clone() = 0;
     
     
     virtual bool validate() = 0;
@@ -35,6 +36,7 @@ public:
     Deploy(const Deploy& other);
     ~Deploy();
     Deploy& operator=(const Deploy& other);
+    virtual Deploy* clone() override;
     
     virtual bool validate() override;
     virtual void execute() override;
@@ -53,6 +55,7 @@ public:
     Advance(const Advance& other);
     ~Advance();
     Advance& operator=(const Advance& other);
+    virtual Advance* clone() override;
     
     virtual bool validate() override;
     virtual void execute() override;
@@ -68,6 +71,7 @@ public:
     Bomb(const Bomb& other);
     ~Bomb();
     Bomb& operator=(const Bomb& other);
+    virtual Bomb* clone() override;
     
     virtual bool validate() override;
     virtual void execute() override;
@@ -83,6 +87,7 @@ public:
     Blockade(const Blockade& other);
     ~Blockade();
     Blockade& operator=(const Blockade& other);
+    virtual Blockade* clone() override;
     
     virtual bool validate() override;
     virtual void execute() override;
@@ -100,6 +105,7 @@ public:
     Airlift(const Airlift& other);
     ~Airlift();
     Airlift& operator=(const Airlift& other);
+    virtual Airlift* clone() override;
     
     virtual bool validate() override;
     virtual void execute() override;
@@ -115,6 +121,7 @@ public:
     Negotiate(const Negotiate& other);
     ~Negotiate();
     Negotiate& operator=(const Negotiate& other);
+    virtual Negotiate* clone() override;
     
     virtual bool validate() override;
     virtual void execute() override;

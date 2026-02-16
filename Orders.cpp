@@ -70,6 +70,11 @@ Deploy& Deploy::operator=(const Deploy& other){
     return *this;
 }
 
+// Clone Method
+Deploy* Deploy::clone() {
+    return new Deploy(*this);
+}
+
 // Validate Method
 bool Deploy::validate(){
     if(this->target == nullptr || this->armyCount <= 0) return false;
@@ -126,6 +131,11 @@ Advance& Advance::operator=(const Advance& other){
     }
     
     return *this;
+}
+
+// Clone Method
+Advance* Advance::clone() {
+    return new Advance(*this);
 }
 
 // Validate Method
@@ -192,6 +202,11 @@ Bomb& Bomb::operator=(const Bomb& other){
     return *this;
 }
 
+// Clone Method
+Bomb* Bomb::clone() {
+    return new Bomb(*this);
+}
+
 // Validate Method
 bool Bomb::validate(){
     if(this->target == nullptr) return false;
@@ -251,6 +266,11 @@ Blockade& Blockade::operator=(const Blockade& other){
     }
     
     return *this;
+}
+
+// Clone Method
+Blockade* Blockade::clone() {
+    return new Blockade(*this);
 }
 
 // Validate Method
@@ -317,6 +337,11 @@ Airlift& Airlift::operator=(const Airlift& other){
     return *this;
 }
 
+// Clone Method
+Airlift* Airlift::clone() {
+    return new Airlift(*this);
+}
+
 // Validate Method
 bool Airlift::validate(){
     if(this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
@@ -373,6 +398,11 @@ Negotiate& Negotiate::operator=(const Negotiate& other){
     return *this;
 }
 
+// Clone Method
+Negotiate* Negotiate::clone() {
+    return new Negotiate(*this);
+}
+
 // Validate Method
 bool Negotiate::validate(){
     if(targetPlayer == nullptr){
@@ -389,8 +419,7 @@ void Negotiate::execute(){
         // Prevent attacks between the 2 players until the end of the turn
         
         this->executed = true;
-        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + "No attacks allowed between the players until the end of the round!";
-        std::cout << "Negotiate Order Executed!" << std::endl;
+        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
     }
 }
 
@@ -413,7 +442,9 @@ OrdersList::OrdersList(){}
 
 // Copy Constructor
 OrdersList::OrdersList(const OrdersList& other){
-    this->orders = other.orders;
+    for (Order* order : other.orders) {
+        this->orders.push_back(order->clone());
+    }
 }
 
 // Destructor
@@ -421,12 +452,24 @@ OrdersList::~OrdersList(){
     for(Order *order : orders){
         delete order;
     }
+    
+    orders.clear();
 }
 
 // Assignment Operator
 OrdersList& OrdersList::operator=(const OrdersList& other){
     if (this != &other){
-        this->orders = other.orders;
+        
+        // Delete existing
+        for(Order* order : orders){
+            delete order;
+        }
+        
+        orders.clear();
+        
+        for (Order* order : other.orders) {
+            this->orders.push_back(order->clone());
+        }
     }
     
     return *this;
