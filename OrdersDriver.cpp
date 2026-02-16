@@ -16,7 +16,8 @@ int main() {
     Territory* england = new Territory(7, "England", 2, nullptr, nullptr);
     
     // Create Player for Negotiate Order
-    Player* player = new Player(nullptr, nullptr, nullptr, 1);
+    int id = 1;
+    Player* player = new Player(nullptr, nullptr, nullptr, &id);
     
     // Add Adjacents
     usa->addAdjacent(canada);
