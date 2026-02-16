@@ -197,19 +197,25 @@ void GameEngine::executeCommand(const std::string& command) {
         std::cout << "Moving to execution phase...\n";
         transition("execute orders");
     }
-    else if (command == "execorder") {
+    else if (command == "execorder")
+    {
         std::cout << "Executing orders from all players...\n";
 
-        //execute one order from each player's order list (simplified)
-        for (Player* p : *players) {
+        //execute all orders
+        for (Player* p : *players)
+        {
             OrdersList* orders = p->getOrdersList();
-            //note: OrdersList doesn't have a method to execute/get orders yet
-            //this is a simplified demonstration
-            std::cout << "Player orders: " << *orders << "\n";
+            orders->executeOrders();
         }
 
-        std::cout << "Orders executed.\n";
-        //no transition because can execute multiple orders
+        std::cout << "\n---------------------------- Orders After Execution -------------------------------------\n";
+
+        //display all orders after execution
+        for (Player* p : *players)
+        {
+            OrdersList* orders = p->getOrdersList();
+            std::cout << *orders; // ← Dereference the pointer!
+        }
     }
     else if (command == "endexecorders") {
         std::cout << "All orders executed.\n";
