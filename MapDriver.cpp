@@ -2,7 +2,8 @@
 #include <vector>
 #include <string>
 #include "Map.h"
-
+//cd cmake-build-debug
+//./MapDriver.exe spain.map
 int main(int argc, char* argv[])
 {
     MapLoader loader;

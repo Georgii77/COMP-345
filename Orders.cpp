@@ -389,8 +389,7 @@ void Negotiate::execute(){
         // Prevent attacks between the 2 players until the end of the turn
         
         this->executed = true;
-        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + "No attacks allowed between the players until the end of the round!";
-        std::cout << "Negotiate Order Executed!" << std::endl;
+        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
     }
 }
 
