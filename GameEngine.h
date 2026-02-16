@@ -10,19 +10,22 @@
 #include <vector>
 #include "Map.h"
 #include "Player.h"
-
+/**
+ * GameEngine class - Controls the flow of the game using state transitions.
+ * Manages game states, validates user commands, and orchestrates game components.
+ */
 class GameEngine {
     private:
-        std::string* currentState;
-        Map* gameMap;
-        std::vector<Player*>* players;
+        std::string* currentState; //current game state (e.g., "start", "map loaded")
+        Map* gameMap; //pointer to the loaded game map
+        std::vector<Player*>* players; //vector of pointers to all players in the game
 
     public:
-        GameEngine();
-        ~GameEngine();
-        GameEngine(const GameEngine& ge);
-        GameEngine& operator=(const GameEngine& ge);
-        friend std::ostream& operator<<(std::ostream& os, const GameEngine& ge);
+        GameEngine(); //def const
+        ~GameEngine(); //dest
+        GameEngine(const GameEngine& ge); //copy const
+        GameEngine& operator=(const GameEngine& ge); //assignment operator
+        friend std::ostream& operator<<(std::ostream& os, const GameEngine& ge); //stream insertion operator
 
         void processCommand(const std::string& command);
         std::string getCurrentState() const;

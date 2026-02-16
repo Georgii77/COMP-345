@@ -33,6 +33,7 @@ private:
 public:
     Deploy(int armyCount, Territory* target);
     Deploy(const Deploy& other);
+    ~Deploy();
     Deploy& operator=(const Deploy& other);
     
     virtual bool validate() override;
@@ -50,6 +51,7 @@ private:
 public:
     Advance(int armyCount,Territory* source, Territory* target);
     Advance(const Advance& other);
+    ~Advance();
     Advance& operator=(const Advance& other);
     
     virtual bool validate() override;
@@ -64,6 +66,7 @@ private:
 public:
     Bomb(Territory* target);
     Bomb(const Bomb& other);
+    ~Bomb();
     Bomb& operator=(const Bomb& other);
     
     virtual bool validate() override;
@@ -78,6 +81,7 @@ private:
 public:
     Blockade(Territory* target);
     Blockade(const Blockade& other);
+    ~Blockade();
     Blockade& operator=(const Blockade& other);
     
     virtual bool validate() override;
@@ -94,6 +98,7 @@ private:
 public:
     Airlift(int armyCount, Territory* source, Territory* target);
     Airlift(const Airlift& other);
+    ~Airlift();
     Airlift& operator=(const Airlift& other);
     
     virtual bool validate() override;
@@ -108,6 +113,7 @@ private:
 public:
     Negotiate(Player* targetPlayer);
     Negotiate(const Negotiate& other);
+    ~Negotiate();
     Negotiate& operator=(const Negotiate& other);
     
     virtual bool validate() override;
@@ -122,13 +128,14 @@ private:
 
 public:
     OrdersList();
-    ~OrdersList();
     OrdersList(const OrdersList& other);
+    ~OrdersList();
     OrdersList& operator=(const OrdersList& other);
     
     void add(Order *order); // Needed since OrdersList isn't a vector. Rather, it uses a vector.
     void move(size_t fromIndex, size_t toIndex);
     void remove(size_t index);
+    void executeOrders();
     friend std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList);
 };
 

@@ -4,6 +4,10 @@
 #include "GameEngine.h"
 #include <iostream>
 
+/**
+ * Driver for GameEngine - Demonstrates state machine navigation
+ * Creates console interface for user to input commands and navigate game states
+ */
 int main() {
     GameEngine* game = new GameEngine();
     std::string command;
