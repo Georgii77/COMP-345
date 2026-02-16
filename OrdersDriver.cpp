@@ -1,9 +1,12 @@
 #include "Map.h"
 #include "Orders.h"
+#include "Player.h"
 #include <iostream>
 #include <ostream>
 
 int main() {
+    
+    // Create Territories
     Territory* canada = new Territory(1, "Canada", 10, nullptr, nullptr);
     Territory* usa = new Territory(2, "USA", 5, nullptr, nullptr);
     Territory* australia = new Territory(3, "Australia", 7, nullptr, nullptr);
@@ -11,6 +14,9 @@ int main() {
     Territory* japan = new Territory(5, "Japan", 8, nullptr, nullptr); 
     Territory* russia = new Territory(6, "Russia", 20, nullptr, nullptr);
     Territory* england = new Territory(7, "England", 2, nullptr, nullptr);
+    
+    // Create Player for Negotiate Order
+    Player* player = new Player(nullptr, nullptr, nullptr, 1);
     
     // Add Adjacents
     usa->addAdjacent(canada);
@@ -20,22 +26,26 @@ int main() {
     china->addAdjacent(japan);
     japan->addAdjacent(china);
     
+    // Create orders
     Order *deploy = new Deploy(5, canada);
     Order *advance = new Advance(5, canada, usa);
     Order *advance1 = new Advance(12, russia, usa);
     Order *bomb = new Bomb(australia);
     Order *blockade = new Blockade(canada);
     Order *airlift = new Airlift(7, china, canada);
-    // Order *negotiate = new Negotiate();
+    Order *negotiate = new Negotiate(player);
 
-    OrdersList orders; // Create List
+    // Create List
+    OrdersList orders;
     
+    // Add all orders to the list
     orders.add(deploy);
     orders.add(advance);
     orders.add(advance1);
     orders.add(bomb);
     orders.add(blockade);
     orders.add(airlift);
+    orders.add(negotiate);
     
     std::cout << "---------------------------- Orders Before Removing ----------------------------" << std::endl;
     std::cout << orders << std::endl;
@@ -64,4 +74,6 @@ int main() {
     delete japan;
     delete russia;
     delete england;
+    
+    delete player;
 }

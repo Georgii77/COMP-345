@@ -327,7 +327,7 @@ bool Airlift::validate(){
 // Execute Method
 void Airlift::execute(){
     if(validate()){
-        // Check if this->source belongs to this Player
+        // Check if this->source belongs to this Player (not for this assignment)
         this->source->setArmySize(this->source->getArmySize() - this->armyCount);
         this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
         this->executed = true;
@@ -352,7 +352,7 @@ std::ostream& operator <<(std::ostream& os, const Airlift& order){
 // Negotiate Class Definitions
 // Parameterized Constructor
 Negotiate::Negotiate(Player* targetPlayer) : targetPlayer(targetPlayer) {
-    // this->description = "Negotiating with Player " + std::to_string(targetPlayer->getID());
+    this->description = "Negotiating with Player " + std::to_string(targetPlayer->getId());
 }
 
 // Copy Constructor
@@ -389,7 +389,7 @@ void Negotiate::execute(){
         // Prevent attacks between the 2 players until the end of the turn
         
         this->executed = true;
-        // this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getID()) + "No attacks allowed between the players until the end of the round!";
+        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + "No attacks allowed between the players until the end of the round!";
         std::cout << "Negotiate Order Executed!" << std::endl;
     }
 }
