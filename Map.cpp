@@ -643,7 +643,7 @@ std::ostream& operator<<(std::ostream& outs, const Map& m) {
 }
 // trim helper function to figure out the header
 static std::string trim(const std::string& line) {
-    int index = 0;
+    size_t index = 0;
     while (index < line.size() &&
         (line[index] == ' ')) {
         index++;
