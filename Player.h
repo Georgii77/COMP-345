@@ -1,0 +1,40 @@
+
+#ifndef PLAYER_H
+#define PLAYER_H
+
+#include <iostream>
+#include <vector>
+#include "Map.h"
+#include "Cards.h"
+#include "Orders.h"
+
+using namespace std;
+
+class Player{
+    public:
+        Player();
+        Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id = nullptr);
+        Player(const Player& p);
+        Player& operator=(const Player& p);
+        ~Player();
+        friend ostream& operator<<(ostream& out, const Player& p);
+
+        vector<Territory*> toDefend();
+        vector<Territory*> toAttack();
+        void issueOrder(Order* order);  
+        
+        Hand* getHand();
+        OrdersList* getOrdersList();
+        vector<Territory*>* getTerritories();
+
+        int* getId();
+
+        
+    private:
+        vector<Territory*>* territories;
+        OrdersList* ordersList;
+        Hand* hand;
+        int* id;
+};
+
+#endif
