@@ -352,7 +352,11 @@ Airlift* Airlift::clone() {
 
 // Validate Method
 bool Airlift::validate(){
-    if(this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
+    if(this->issuingPlayer == nullptr||this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
+    
+    if(this->issuingPlayer != this->source->getPlayer() && this->issuingPlayer != this->source->getPlayer()) return false;
+    
+    if(this->source->getArmySize() < this->armyCount) return false;
 
     return true;
 }
@@ -360,9 +364,8 @@ bool Airlift::validate(){
 // Execute Method
 void Airlift::execute(){
     if(validate()){
-        // Check if this->source belongs to this Player (not for this assignment)
         this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-        this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
+        this->target->setArmySize(this->target->getArmySize() + this->armyCount);
         this->executed = true;
         this->effect = std::to_string(this->armyCount) + " armies airlifted from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
         std::cout << "Airlift Order Executed!" << std::endl;
