@@ -217,16 +217,16 @@ Bomb* Bomb::clone() {
 
 // Validate Method
 bool Bomb::validate(){
-    if(this->target == nullptr) return false;
-    
-    // Check if target doesn't belong to the issuing Player
+    if(this->target == nullptr || this->issuingPlayer == nullptr ||this->issuingPlayer == this->target->getPlayer()) return false;
     
     // Check if any of the Player's territories are adjacent to target
+    bool targetAdjacent = false;
+    for (Territory* territories : *this->issuingPlayer->getTerritories()){
+        if(territories->isAdjacentTo(target)) targetAdjacent = true;
+    }
     
-    // If it's adjacent:
-    //      return true;
-    
-    return true;
+    // Check if it's adjacent:
+    return targetAdjacent;
 }
 
 // Execute Method
