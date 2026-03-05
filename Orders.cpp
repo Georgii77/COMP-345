@@ -7,11 +7,15 @@
 #include <vector>
 
 // Order Class Definitions
-// Parameterized Constructor 
+// Default Constructor 
 Order::Order() : description(""), effect(""), executed(false){}
+
+// Parameterized Constructor
+Order::Order(Player* issuingPlayer) : issuingPlayer(issuingPlayer){}
 
 // Copy Constructor
 Order::Order(const Order& other){
+    this->issuingPlayer = other.issuingPlayer;
     this->description = other.description;
     this->effect = other.effect;
     this->executed = other.executed;
@@ -46,7 +50,7 @@ std::ostream& operator <<(std::ostream& os, const Order& order){
 
 // Deploy Class Definitions
 // Parameterized Constructor 
-Deploy::Deploy(int armyCount, Territory* target) : armyCount(armyCount), target(target){
+Deploy::Deploy(Player* issuingPlayer, int armyCount, Territory* target) : Order(issuingPlayer), armyCount(armyCount), target(target){
     this->description = "Deploy " + std::to_string(armyCount) + " armies to " + target->getName();
 }
 
@@ -79,6 +83,8 @@ Deploy* Deploy::clone() {
 bool Deploy::validate(){
     if(this->target == nullptr || this->armyCount <= 0) return false;
     
+    if(this->issuingPlayer != this->target->getPlayer()) return false;
+    
     return true;
 }
 
@@ -107,7 +113,7 @@ std::ostream& operator <<(std::ostream& os, const Deploy& order){
 
 // Advance Class Definitions
 // Parameterized Constructor 
-Advance::Advance(int armyCount, Territory* source, Territory* target) : armyCount(armyCount), source(source), target(target) {
+Advance::Advance(Player* issuingPlayer, int armyCount, Territory* source, Territory* target) : Order(issuingPlayer), armyCount(armyCount), source(source), target(target) {
     this->description = std::to_string(this->armyCount) + " armies advancing from " + this->source->getName() + " to " + this->target->getName();
 }
 
@@ -141,6 +147,8 @@ Advance* Advance::clone() {
 // Validate Method
 bool Advance::validate(){
     if(this->source == nullptr ||this->target == nullptr || this->armyCount <= 0) return false;
+    
+    if(this->issuingPlayer != this->source->getPlayer()) return false;
     
     bool areAdjacent = false;
     for(Territory* t : this->source->getAdjacents()){
@@ -180,7 +188,7 @@ std::ostream& operator <<(std::ostream& os, const Advance& order){
 
 // Bomb Class Definitions
 // Parameterized Constructor 
-Bomb::Bomb(Territory* target) : target(target){
+Bomb::Bomb(Player* issuingPlayer, Territory* target) : Order(issuingPlayer), target(target){
     this->description = "Bombing " + this->target->getName();
 }
 
@@ -246,7 +254,7 @@ std::ostream& operator <<(std::ostream& os, const Bomb& order){
 
 // Blockade Class Definitions
 // Parameterized Constructor 
-Blockade::Blockade(Territory* target) : target(target) {
+Blockade::Blockade(Player* issuingPlayer, Territory* target) : Order(issuingPlayer), target(target) {
     this->description = "Blockading " + this->target->getName();
 }
 
@@ -311,7 +319,7 @@ std::ostream& operator <<(std::ostream& os, const Blockade& order){
 
 // Airlift Class Definitions
 // Parameterized Constructor 
-Airlift::Airlift(int armyCount, Territory* source, Territory* target) : armyCount(armyCount), source(source), target(target) {
+Airlift::Airlift(Player* issuingPlayer, int armyCount, Territory* source, Territory* target) : Order(issuingPlayer), armyCount(armyCount), source(source), target(target) {
     this->description = "Airlifting " + std::to_string(armyCount) + " armies from " + this->source->getName() + " to " + this->target->getName();
 }
 
@@ -376,8 +384,8 @@ std::ostream& operator <<(std::ostream& os, const Airlift& order){
 
 // Negotiate Class Definitions
 // Parameterized Constructor
-Negotiate::Negotiate(Player* targetPlayer) : targetPlayer(targetPlayer) {
-    this->description = "Negotiating with Player " + std::to_string(targetPlayer->getId());
+Negotiate::Negotiate(Player* issuingPlayer, Player* targetPlayer) : Order(issuingPlayer), targetPlayer(targetPlayer) {
+    this->description = "Negotiating with Player " + std::to_string(*(targetPlayer->getId()));
 }
 
 // Copy Constructor
