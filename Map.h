@@ -29,6 +29,7 @@ public:
     void setPlayer(Player* p);
     Continent* getContinent() const;
     void setContinent(Continent* c);
+    bool isAdjacentTo(Territory* other) const;
 
 private:
     int id;
@@ -61,6 +62,7 @@ public:
     Map();
     Map(const Map& m);
     Map& operator=(const Map& m);
+    ~Map();
 
     void addTerritory(Territory* t);
     void addContinent(Continent* c);
