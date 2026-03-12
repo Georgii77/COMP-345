@@ -1,29 +1,20 @@
-//
-// Created by karam on 13/02/2026.
-//
+/**
+* GameEngineDriver - Assignment 2 Part 2: Game Startup Phase
+ */
+
 #include "GameEngine.h"
 #include <iostream>
 
-/**
- * Driver for GameEngine - Demonstrates state machine navigation
- * Creates console interface for user to input commands and navigate game states
- */
 int main() {
     GameEngine* game = new GameEngine();
-    std::string command;
 
-    std::cout << "Warzone Game Engine\n";
-    std::cout << "Type commands to navigate states (type 'quit' to exit)\n\n";
+    // Run the startup phase (Part 2 requirement)
+    game->startupPhase();
 
-    while (true) {
-        std::cout << "Current State: " << game->getCurrentState() << "\n";
-        std::cout << "Enter command: ";
-        std::cin >> command;
-
-        if (command == "quit") break;
-
-        game->processCommand(command);
-    }
+    std::cout << "\n========================================\n";
+    std::cout << "Startup phase complete!\n";
+    std::cout << "Final state: " << game->getCurrentState() << "\n";
+    std::cout << "========================================\n";
 
     delete game;
     return 0;
