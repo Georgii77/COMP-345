@@ -27,7 +27,7 @@ class Command {
     private:
         string command;
         string effect;
-}
+};
 
 class CommandProcessor {
 
@@ -50,7 +50,7 @@ class CommandProcessor {
     private:
         vector<Command*>* commands;
 
-}
+};
 
 class FileLineReader {
 public:

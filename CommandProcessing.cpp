@@ -6,8 +6,9 @@
 #include "GameEngine.h"
 
 using namespace std;
-static string_trim(const string& value){
-    size_t_start = 0;
+
+static string trim(const string& value){
+    size_t start = 0;
 
     while (start < value.size() && isspace(static_cast<unsigned char>(value[start]))) {
         ++start;
@@ -23,43 +24,42 @@ static string_trim(const string& value){
 }
 
 Command::Command() {
-    command = new string("");
-    effect = new string("");
+    command = "";
+    effect = "";
 }
 
 Command::Command(const string& commandStr) {
-    command = new string(commandStr);
-    effect = new string("");
+    command = commandStr;
+    effect = "";
 }
 
 Command::Command(const Command& other) {
-    command = new string(*other.command);
-    effect = new string(*other.effect);
+    command = other.command;
+    effect = other.effect;
 }
 
 Command& Command::operator=(const Command& other) {
     if (this != &other) {
-        *command = *other.command;
-        *effect = *other.effect;
+        command = other.command;
+        effect = other.effect;
     }
     return *this;
 }
 
 Command::~Command() {
-    delete command;
-    delete effect;
+    // No manual deletion needed
 }
 
 void Command::saveEffect(const string& effectStr) {
-    *effect = effectStr;
+    effect = effectStr;
 }
 
 string Command::getCommand() const {
-    return *command;
+    return command;
 }
 
 string Command::getEffect() const {
-    return *effect;
+    return effect;
 }
 
 ostream& operator<<(ostream& out, const Command& commandObj) {
@@ -134,7 +134,11 @@ bool CommandProcessor::validate(Command* command, const GameEngine& gameEngine) 
     if (command == nullptr) {
         return false;
     }
-    return gameEngine.isValidCommand(command->getCommand());
+    if (!gameEngine.isValidTransition(command->getCommand())) {
+        command->saveEffect("ERROR: command '" + command->getCommand() + "' is invalid in state '" + gameEngine.getCurrentState() + "'");
+        return false;
+    }
+    return true;
 }
 
 const vector<Command*>* CommandProcessor::getCommands() const {
@@ -150,46 +154,45 @@ ostream& operator<<(ostream& out, const CommandProcessor& commandProcessor) {
 }
 
 FileLineReader::FileLineReader() {
-    filename = new string("");
-    inputFile = new ifstream();
+    filename = "";
+    inputFile = ifstream();
 }
 
 FileLineReader::FileLineReader(const string& file) {
-    filename = new string(file);
-    inputFile = new ifstream(file.c_str());
+    filename = file;
+    inputFile.open(file);
 }
 
 FileLineReader::FileLineReader(const FileLineReader& other) {
-    filename = new string(*other.filename);
-    inputFile = new ifstream(filename->c_str());
+    filename = other.filename;
+    inputFile.open(filename);
 }
 
 FileLineReader& FileLineReader::operator=(const FileLineReader& other) {
     if (this != &other) {
-        if (inputFile->is_open()) {
-            inputFile->close();
+        if (inputFile.is_open()) {
+            inputFile.close();
         }
-        *filename = *other.filename;
-        inputFile->open(filename->c_str());
+        filename = other.filename;
+        inputFile.open(filename);
     }
     return *this;
 }
 
 FileLineReader::~FileLineReader() {
-    if (inputFile->is_open()) {
-        inputFile->close();
+    if (inputFile.is_open()) {
+        inputFile.close();
     }
-    delete inputFile;
-    delete filename;
+    // No manual deletion needed
 }
 
 string FileLineReader::readLineFromFile() {
-    if (!inputFile->is_open()) {
+    if (!inputFile.is_open()) {
         return "";
     }
 
     string line;
-    if (!getline(*inputFile, line)) {
+    if (!getline(inputFile, line)) {
         return "";
     }
 
@@ -197,7 +200,7 @@ string FileLineReader::readLineFromFile() {
 }
 
 string FileLineReader::getFilename() const {
-    return *filename;
+    return filename;
 }
 
 ostream& operator<<(ostream& out, const FileLineReader& fileLineReader) {
