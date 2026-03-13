@@ -134,12 +134,23 @@ bool CommandProcessor::validate(Command* command, const GameEngine& gameEngine) 
     if (command == nullptr) {
         return false;
     }
-    if (!gameEngine.isValidTransition(command->getCommand())) {
-        command->saveEffect("ERROR: command '" + command->getCommand() + "' is invalid in state '" + gameEngine.getCurrentState() + "'");
+
+    std::istringstream iss(command->getCommand());
+    std::string commandName;
+    iss >> commandName;
+
+    if (!gameEngine.isValidTransition(commandName)) {
+        std::cout << "Invalid command '" << command->getCommand()
+                  << "' for state '" << gameEngine.getCurrentState() << "'" << std::endl;
+
+        command->saveEffect("ERROR: command '" + command->getCommand()
+            + "' is invalid in state '" + gameEngine.getCurrentState() + "'");
         return false;
     }
+
     return true;
 }
+
 
 const vector<Command*>* CommandProcessor::getCommands() const {
     return commands;
