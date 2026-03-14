@@ -7,12 +7,15 @@
 #include "Player.h"
 #include "Orders.h"
 #include "Cards.h"
+#include <random>
+#include <algorithm>
 
 //constructor
 GameEngine::GameEngine() {
     currentState = new std::string("start");
     gameMap = nullptr;
     players = new std::vector<Player*>();
+    gameDeck = new Deck(50); //create deck with 50 cards (10 of each type)
 }
 
 //destructor
@@ -23,12 +26,14 @@ GameEngine::~GameEngine() {
         delete p;
     }
     delete players;
+    delete gameDeck;
 }
 
 //copy constructor
 GameEngine::GameEngine(const GameEngine& ge) {
     currentState = new std::string(*ge.currentState);
     gameMap = ge.gameMap ? new Map(*ge.gameMap) : nullptr;
+    gameDeck = ge.gameDeck ? new Deck(*ge.gameDeck) : nullptr;
     //deep copy of players
     players = new std::vector<Player*>();
     for (Player* p : *ge.players) {
@@ -41,11 +46,13 @@ GameEngine& GameEngine::operator=(const GameEngine& ge) {
     if (this != &ge) {
         delete currentState;
         delete gameMap;
+        delete gameDeck;
         for (Player* p : *players) delete p;  //clean up old players
         delete players;
 
         currentState = new std::string(*ge.currentState);
         gameMap = ge.gameMap ? new Map(*ge.gameMap) : nullptr;
+        gameDeck = ge.gameDeck ? new Deck(*ge.gameDeck) : nullptr;
 
         //deep copy of players
         players = new std::vector<Player*>();
@@ -89,7 +96,7 @@ bool GameEngine::isValidTransition(const std::string& command) const {
         return command == "addplayer";
     }
     else if (*currentState == "players added") {
-        return command == "addplayer" || command == "assigncountries";
+        return command == "addplayer" || command == "gamestart";
     }
     else if (*currentState == "assign reinforcement") {
         return command == "issueorder";
@@ -137,27 +144,44 @@ void GameEngine::executeCommand(const std::string& command) {
         }
     }
     else if (command == "addplayer") {
+        // Check maximum players (2.2.3: 2-6 players allowed)
+        if (players->size() >= 6) {
+            std::cout << "Maximum of 6 players already added!\n";
+            std::cout << "Staying in current state.\n";
+            return;
+        }
+
         std::cout << "Enter player name: ";
         std::string playerName;
         std::cin >> playerName;
 
-        // Use default constructor - hand will be nullptr
-        Player* newPlayer = new Player();
+        // Create player with ID
+        int* playerId = new int(players->size() + 1);
+        Player* newPlayer = new Player(nullptr, nullptr, nullptr, playerId);
         players->push_back(newPlayer);
+        delete playerId;  // Player makes its own copy
 
-        std::cout << "Player " << playerName << " added.\n";
+        std::cout << "Player " << playerName << " (ID: " << newPlayer->getId()
+                  << ") added. Total players: " << players->size() << "\n";
         transition("players added");
     }
-    else if (command == "assigncountries") {
+    else if (command == "gamestart") {
+        // Validate 2-6 players (2.2.3)
         if (players->size() < 2) {
             std::cout << "Need at least 2 players to start the game!\n";
             std::cout << "Staying in current state.\n";
             return;
         }
+        if (players->size() > 6) {
+            std::cout << "Maximum 6 players allowed!\n";
+            std::cout << "Staying in current state.\n";
+            return;
+        }
 
-        std::cout << "Assigning countries to players...\n";
+        std::cout << "\n===== GAME START =====\n";
 
-        // Actually assign territories to players in round-robin fashion
+        // 2.2.4: Fairly distribute all territories to players
+        std::cout << "\n1. Distributing territories fairly...\n";
         const std::vector<Territory*>& territories = gameMap->getTerritories();
         int playerIndex = 0;
         for (Territory* t : territories) {
@@ -165,9 +189,39 @@ void GameEngine::executeCommand(const std::string& command) {
             (*players)[playerIndex]->getTerritories()->push_back(t);
             playerIndex = (playerIndex + 1) % players->size();
         }
+        std::cout << "    " << territories.size() << " territories distributed to "
+                  << players->size() << " players\n";
 
-        std::cout << "Countries assigned to " << players->size() << " players.\n";
-        transition("assign reinforcement");
+        // 2.2.5: Randomly determine order of play
+        std::cout << "\n2. Randomizing player order...\n";
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(players->begin(), players->end(), g);
+        std::cout << "    Play order:\n";
+        for (size_t i = 0; i < players->size(); i++) {
+            std::cout << "      " << (i+1) << ". Player ID " << (*players)[i]->getId() << "\n";
+        }
+
+        // 2.2.6: Give 50 initial armies to each player
+        std::cout << "\n3. Assigning initial armies...\n";
+        for (Player* p : *players) {
+            p->setReinforcementPool(50);
+        }
+        std::cout << "    Each player received 50 armies in reinforcement pool\n";
+
+        // 2.2.7: Each player draws 2 initial cards
+        std::cout << "\n4. Drawing initial cards...\n";
+        for (Player* p : *players) {
+            Hand* playerHand = new Hand(2, gameDeck);
+            p->setHand(playerHand);  // ← Now this works!
+            std::cout << "   Player ID " << p->getId() << " drew 2 cards\n";
+        }
+        std::cout << "    Each player received a hand with 2 cards\n";
+
+        // 2.2.8: Transition to play phase
+        std::cout << "\n5. Starting play phase...\n";
+        std::cout << "===== GAME READY =====\n\n";
+        transition("assignreinforcement");
     }
     else if (command == "issueorder") {
         std::cout << "Which player (0-" << players->size()-1 << ")? ";
@@ -247,4 +301,40 @@ void GameEngine::executeCommand(const std::string& command) {
 void GameEngine::transition(const std::string& newState) {
     *currentState = newState;
     std::cout << "Transitioned to state: " << newState << "\n";
+}
+
+/**
+ * Startup Phase - Manages the game setup through user commands
+ * Allows loadmap, validatemap, addplayer, and gamestart commands
+ * Continues until game transitions to assignreinforcement state
+ */
+void GameEngine::startupPhase() {
+    std::cout << "\n========================================\n";
+    std::cout << "       WARZONE - STARTUP PHASE\n";
+    std::cout << "========================================\n";
+    std::cout << "Commands:\n";
+    std::cout << "  loadmap <filename> - Load a map file\n";
+    std::cout << "  validatemap        - Validate loaded map\n";
+    std::cout << "  addplayer <name>   - Add player (2-6 players)\n";
+    std::cout << "  gamestart          - Start the game\n";
+    std::cout << "========================================\n\n";
+
+    // Loop until game starts (transitions to assignreinforcement)
+    while (*currentState != "assignreinforcement") {
+        std::cout << "\nCurrent State: " << *currentState << "\n";
+        std::cout << "Players: " << players->size() << "/6\n";
+        std::cout << "Enter command: ";
+
+        std::string command;
+        std::cin >> command;
+
+        // Process the command using existing framework
+        processCommand(command);
+
+        // Check if we've reached the play phase
+        if (*currentState == "assignreinforcement") {
+            std::cout << "\n Startup phase complete! Ready to play.\n";
+            break;
+        }
+    }
 }

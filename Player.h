@@ -28,13 +28,16 @@ class Player{
         vector<Territory*>* getTerritories();
 
         int getId();
-
-        
+        int getReinforcementPool() const;
+        void setReinforcementPool(int armies);
+        void addToReinforcementPool(int armies);
+        void setHand(Hand* h);
     private:
         vector<Territory*>* territories;
         OrdersList* ordersList;
         Hand* hand;
         int* id;
+        int* reinforcementPool;
 };
 
 #endif

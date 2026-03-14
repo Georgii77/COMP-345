@@ -6,6 +6,7 @@ Player::Player() {
     ordersList = new OrdersList();
     hand = nullptr;
     id = nullptr;
+    reinforcementPool = new int(0);
 }
 
 Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
@@ -36,6 +37,8 @@ Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* ha
     } else {
         this->id = nullptr;
     }
+
+    reinforcementPool = new int(0);
 }
 
 Player::Player(const Player& p){
@@ -52,7 +55,11 @@ Player::Player(const Player& p){
     } else {
         this->id = new int(*p.id);
     }
-    
+    if (p.reinforcementPool != nullptr) {
+        this->reinforcementPool = new int(*p.reinforcementPool);
+    } else {
+        this->reinforcementPool = new int(0);
+    }
 }
 
 Player::~Player() {
@@ -60,6 +67,7 @@ Player::~Player() {
     delete ordersList;
     delete hand;
     delete id;
+    delete reinforcementPool;
 }
 
 Player& Player::operator=(const Player& p) {
@@ -70,6 +78,7 @@ Player& Player::operator=(const Player& p) {
     delete ordersList;
     delete hand;
     delete id;
+    delete reinforcementPool;
 
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
@@ -84,6 +93,13 @@ Player& Player::operator=(const Player& p) {
     } else {
         this->id = new int(*p.id);
     }
+
+    if (p.reinforcementPool != nullptr) {
+        this->reinforcementPool = new int(*p.reinforcementPool);
+    } else {
+        this->reinforcementPool = new int(0);
+    }
+
     return *this;
 }
 
@@ -133,4 +149,32 @@ int Player::getId() {
         return 0;  // Default ID if not set
     }
     return *id;
+}
+
+void Player::setHand(Hand* h) {
+    delete hand;  // Clean up old hand
+    hand = h;
+}
+
+int Player::getReinforcementPool() const {
+    if (reinforcementPool == nullptr) {
+        return 0;
+    }
+    return *reinforcementPool;
+}
+
+void Player::setReinforcementPool(int armies) {
+    if (reinforcementPool == nullptr) {
+        reinforcementPool = new int(armies);
+    } else {
+        *reinforcementPool = armies;
+    }
+}
+
+void Player::addToReinforcementPool(int armies) {
+    if (reinforcementPool == nullptr) {
+        reinforcementPool = new int(armies);
+    } else {
+        *reinforcementPool += armies;
+    }
 }
