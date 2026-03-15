@@ -1,4 +1,6 @@
 #include "Player.h"
+#include "Map.h"
+#include <vector>
 using namespace std;
 
 Player::Player() {
@@ -40,12 +42,22 @@ Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* ha
     }
 
     reinforcementPool = new int(0);
+    conqueredThisTurn = false;
+}
+
+// Neutral Player Constructor
+Player::Player(int* id){
+    this->id = id;
+    territories = new vector<Territory*>();
+    ordersList = nullptr;
+    hand = nullptr;
+    reinforcementPool = nullptr;
+    conqueredThisTurn = false;
 }
 
 Player::Player(const Player& p){
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
-    //hand = new Hand(*p.hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
     if (p.hand != nullptr) {
         this->hand = new Hand(*p.hand);
     } else {
@@ -61,6 +73,7 @@ Player::Player(const Player& p){
     } else {
         this->reinforcementPool = new int(0);
     }
+    this->conqueredThisTurn = p.conqueredThisTurn;
 }
 
 Player::~Player() {
@@ -83,7 +96,6 @@ Player& Player::operator=(const Player& p) {
 
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
-    //hand = new Hand(*p.hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
     if (p.hand != nullptr) {
         this->hand = new Hand(*p.hand);
     } else {
@@ -100,6 +112,8 @@ Player& Player::operator=(const Player& p) {
     } else {
         this->reinforcementPool = new int(0);
     }
+    
+    this->conqueredThisTurn = p.conqueredThisTurn;
 
     return *this;
 }
@@ -184,6 +198,10 @@ bool Player::getConqueredThisTurn(){
     return this->conqueredThisTurn;
 }
 
+Player* Player::getNeutralPlayer() const{
+    return neutralPlayer;
+}
+
 void Player::setConqueredThisTurn(bool conqueredThisTurn){
     this->conqueredThisTurn = conqueredThisTurn;
 }
@@ -200,3 +218,5 @@ void Player::addToNegotiatedWith(Player* player){
 void Player::clearNegotiatedWith(){
     negotiatedWith.clear();
 }
+
+Player* Player::neutralPlayer = new Player(new int(-1));

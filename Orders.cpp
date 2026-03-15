@@ -351,10 +351,7 @@ Blockade* Blockade::clone() {
 bool Blockade::validate(){
     if(this->target == nullptr) return false;
     
-    // Check if target belongs to this Player
-    // 
-    // If it belongs to them:
-    //      return true
+    if(this->issuingPlayer != this->target->getPlayer()) return false;
     
     return true;
 }

@@ -14,6 +14,7 @@ class Player{
     public:
         Player();
         Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id = nullptr);
+        Player(int* id); // For neutral player only
         Player(const Player& p);
         Player& operator=(const Player& p);
         ~Player();
@@ -30,6 +31,7 @@ class Player{
         int getId();
         bool getConqueredThisTurn();
         int getReinforcementPool() const;
+        Player* getNeutralPlayer() const;
         void setReinforcementPool(int armies);
         void addToReinforcementPool(int armies);
         void setHand(Hand* h);
@@ -46,6 +48,7 @@ class Player{
         int* reinforcementPool;
         bool conqueredThisTurn;
         vector<Player*> negotiatedWith;
+        static Player* neutralPlayer;
 };
 
 #endif
