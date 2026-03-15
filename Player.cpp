@@ -198,7 +198,7 @@ bool Player::getConqueredThisTurn(){
     return this->conqueredThisTurn;
 }
 
-Player* Player::getNeutralPlayer() const{
+Player* Player::getNeutralPlayer(){
     return neutralPlayer;
 }
 

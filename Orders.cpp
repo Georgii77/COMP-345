@@ -359,8 +359,18 @@ bool Blockade::validate(){
 // Execute Method
 void Blockade::execute(){
     if(validate()){
-        this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
+        this->target->setArmySize(this->target->getArmySize() * 2); // Double the number of armies in the territory
+        
         // Set Territory to neutral
+        for(size_t i = 0; i < this->target->getPlayer()->getTerritories()->size(); i++){
+            if (this->target->getPlayer()->getTerritories()->at(i) == this->target){
+                this->target->getPlayer()->getTerritories()->erase(this->target->getPlayer()->getTerritories()->begin() + i);
+                break;
+            }
+        }
+        this->target->setPlayer(Player::getNeutralPlayer());
+        Player::getNeutralPlayer()->getTerritories()->push_back(this->target);
+        
         this->executed = true;
         this->effect = this->target->getName() + " has been blockaded and has become a neutral territory. The current army size in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Blockade Order Executed!" << std::endl;

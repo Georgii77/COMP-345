@@ -31,7 +31,7 @@ class Player{
         int getId();
         bool getConqueredThisTurn();
         int getReinforcementPool() const;
-        Player* getNeutralPlayer() const;
+        static Player* getNeutralPlayer();
         void setReinforcementPool(int armies);
         void addToReinforcementPool(int armies);
         void setHand(Hand* h);
