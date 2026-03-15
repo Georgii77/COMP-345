@@ -178,55 +178,62 @@ void Advance::execute(){
         }
         // Attack
         else {
-            /*CHECK NEGOTIATION
-             * IF NEGOTIATED:
-             *      EXIT
-             * ELSE:
-             *      CONTINUE
-             */
-            
-            int attackerCausalties = 0;
-            for(int i = 0;  i < this->armyCount; i++){
-                int randomNum = rand() % 100; // Random number between 100 possible values
-                if(randomNum >= 70)
-                    attackerCausalties++;
-            }
-            
-            int defenderCausalties = 0;
-            for(int i = 0; i < this->target->getArmySize(); i++){
-                int randomNum = rand() % 100; // Random number between 100 possible values
-                if(randomNum >= 60)
-                    defenderCausalties++;
-            }
-            
-            // Defender wins
-            if(this->target->getArmySize() - defenderCausalties > 0){
-                this->target->setArmySize(this->target->getArmySize() - defenderCausalties);
-                this->source->setArmySize(this->source->getArmySize() - attackerCausalties);
-                
-                this->executed = true;
-                this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Defender held their territory!\n" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
-                std::cout << "Advance Order Executed!" << std::endl;
-            }
-            // Attacker wins
-            else {
-                // Transfer ownership
-                this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + this->target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Attackers conquered the territory!\n";            
-                for(size_t i = 0; i < this->target->getPlayer()->getTerritories()->size(); i++){
-                    if (this->target->getPlayer()->getTerritories()->at(i) == this->target){
-                        this->target->getPlayer()->getTerritories()->erase(this->target->getPlayer()->getTerritories()->begin() + i);
-                        break;
-                    }
+            bool negotiated = false;
+            for(Player* negotiatedWithPlayer : this->issuingPlayer->getNegotiatedWith()){
+                if(negotiatedWithPlayer == this->target->getPlayer()){
+                   negotiated = true;
+                    break;
                 }
-                this->target->setPlayer(this->issuingPlayer);
-                this->issuingPlayer->getTerritories()->push_back(this->target);
-                this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-                this->target->setArmySize(this->armyCount - attackerCausalties);
+            }
+             
+            if(negotiated){
+                this->executed = false;
+                this->effect = "Advance cancelled. Player " + std::to_string(this->issuingPlayer->getId()) + " and Player " + std::to_string(this->target->getPlayer()->getId()) +" have a peace negotation in effect!";
+            }
+            else {
+                int attackerCausalties = 0;
+                for(int i = 0;  i < this->armyCount; i++){
+                    int randomNum = rand() % 100; // Random number between 100 possible values
+                    if(randomNum >= 70)
+                        attackerCausalties++;
+                }
                 
-                this->executed = true;
-                this->effect += this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
-                this->issuingPlayer->setConqueredThisTurn(true);
-                std::cout << "Advance Order Executed!" << std::endl;
+                int defenderCausalties = 0;
+                for(int i = 0; i < this->target->getArmySize(); i++){
+                    int randomNum = rand() % 100; // Random number between 100 possible values
+                    if(randomNum >= 60)
+                        defenderCausalties++;
+                }
+                
+                // Defender wins
+                if(this->target->getArmySize() - defenderCausalties > 0){
+                    this->target->setArmySize(this->target->getArmySize() - defenderCausalties);
+                    this->source->setArmySize(this->source->getArmySize() - attackerCausalties);
+                    
+                    this->executed = true;
+                    this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Defender held their territory!\n" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                    std::cout << "Advance Order Executed!" << std::endl;
+                }
+                // Attacker wins
+                else {
+                    // Transfer ownership
+                    this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + this->target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Attackers conquered the territory!\n";            
+                    for(size_t i = 0; i < this->target->getPlayer()->getTerritories()->size(); i++){
+                        if (this->target->getPlayer()->getTerritories()->at(i) == this->target){
+                            this->target->getPlayer()->getTerritories()->erase(this->target->getPlayer()->getTerritories()->begin() + i);
+                            break;
+                        }
+                    }
+                    this->target->setPlayer(this->issuingPlayer);
+                    this->issuingPlayer->getTerritories()->push_back(this->target);
+                    this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+                    this->target->setArmySize(this->armyCount - attackerCausalties);
+                    
+                    this->executed = true;
+                    this->effect += this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                    this->issuingPlayer->setConqueredThisTurn(true);
+                    std::cout << "Advance Order Executed!" << std::endl;
+                }
             }
         }
     }
@@ -475,7 +482,7 @@ Negotiate* Negotiate::clone() {
 
 // Validate Method
 bool Negotiate::validate(){
-    if(targetPlayer == nullptr){
+    if(targetPlayer == nullptr || targetPlayer == this->issuingPlayer){
         std::cout << "Invalid Player!" << std::endl;
         return false;
     }
@@ -486,7 +493,8 @@ bool Negotiate::validate(){
 // Execute Method
 void Negotiate::execute(){
     if(validate()){
-        // Prevent attacks between the 2 players until the end of the turn
+        this->issuingPlayer->addToNegotiatedWith(targetPlayer);
+        this->targetPlayer->addToNegotiatedWith(this->issuingPlayer);
         
         this->executed = true;
         this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
