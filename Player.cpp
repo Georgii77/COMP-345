@@ -178,3 +178,24 @@ void Player::addToReinforcementPool(int armies) {
         *reinforcementPool += armies;
     }
 }
+
+bool Player::getConqueredThisTurn(){
+    return this->conqueredThisTurn;
+}
+
+void Player::setConqueredThisTurn(bool conqueredThisTurn){
+    this->conqueredThisTurn = conqueredThisTurn;
+}
+
+vector<Player*> Player::getNegotiatedWith(){
+    return this->negotiatedWith;
+}
+
+void Player::addToNegotiatedWith(Player* player){
+    negotiatedWith.push_back(player);
+}
+
+// Called at the end of each turn
+void Player::clearNegotiatedWith(){
+    negotiatedWith.clear();
+}
