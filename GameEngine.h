@@ -32,10 +32,20 @@ class GameEngine {
         std::string getCurrentState() const;
         bool isValidTransition(const std::string& command) const;
         void startupPhase();  //startup phase method
+        void reinforcementPhase();
+        void issueOrdersPhase();
+        void executeOrdersPhase();
+        void mainGameLoop();
+
+        void removeEliminatedPlayers();
+        bool checkWin() const;
+        Player* getWinner() const;
+        bool playerControlsContinent(Player* player, Continent* continent) const;
 
     private:
         void transition(const std::string& newState);
         void executeCommand(const std::string& command);
+        
 };
 
 

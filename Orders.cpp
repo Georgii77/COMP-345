@@ -533,3 +533,18 @@ std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList){
     
     return os;
 }
+
+bool OrdersList::empty() const {
+    return orders.empty();
+}
+
+Order* OrdersList::getOrder(size_t index) const {
+    if (index >= orders.size()) {
+        return nullptr;
+    }
+    return orders[index];
+}
+
+size_t OrdersList::size() const {
+    return orders.size();
+}
