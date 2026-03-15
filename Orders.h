@@ -146,6 +146,9 @@ public:
     void remove(size_t index);
     void executeOrders();
     friend std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList);
+    bool empty() const;
+    Order* getOrder(size_t index) const;
+    size_t size() const;
 };
 
 
