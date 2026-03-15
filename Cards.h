@@ -1,3 +1,6 @@
+#ifndef CARDS_H
+#define CARDS_H
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -36,7 +39,7 @@ public:
 
     // Creates an Order object and add it to the players list of orders. 
     // Removes the card from the players hand and adds it to the deck
-    void play(int index, OrdersList* orders, Hand* hand, Deck* deck, Territory* source, Territory* target, int armyCount, Player* player);
+    void play(int index, OrdersList* orders, Hand* hand, Deck* deck, Territory* source, Territory* target, int armyCount, Player* issuingPlayer, Player* targetPlayer);
 
     Card getCard() const;
 
@@ -102,6 +105,6 @@ public:
     size_t size() const;
     
     Card getCard(size_t index) const;
-
-
 };
+
+#endif
