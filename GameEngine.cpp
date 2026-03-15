@@ -3,7 +3,7 @@
 //
 
 #include "GameEngine.h"
-#include "Map.h"  //only complete part, will update with others once complete
+#include "Map.h"
 #include "Player.h"
 #include "Orders.h"
 #include "Cards.h"
@@ -237,7 +237,7 @@ void GameEngine::executeCommand(const std::string& command) {
         Player* currentPlayer = (*players)[playerIdx];
         if (currentPlayer->getTerritories()->size() > 0) {
             Territory* firstTerritory = (*currentPlayer->getTerritories())[0];
-            Order* deployOrder = new Deploy(5, firstTerritory);
+            Order* deployOrder = new Deploy(currentPlayer, 5, firstTerritory);
             currentPlayer->getOrdersList()->add(deployOrder);
             std::cout << "Deploy order issued for player " << playerIdx << "\n";
         } else {
@@ -422,7 +422,7 @@ void GameEngine::reinforcementPhase() {
                             armiesToDeploy = currentPlayer->getReinforcementPool();
                         }
 
-                        Order* deployOrder = new Deploy(armiesToDeploy, target);
+                        Order* deployOrder = new Deploy(currentPlayer, armiesToDeploy, target);
                         currentPlayer->issueOrder(deployOrder);
 
                         currentPlayer->setReinforcementPool(currentPlayer->getReinforcementPool() - armiesToDeploy);
@@ -460,7 +460,7 @@ void GameEngine::reinforcementPhase() {
                             }
 
                             if (source->isAdjacentTo(target) && target->getPlayer() != currentPlayer) {
-                                Order* advanceOrder = new Advance(1, source, target);
+                                Order* advanceOrder = new Advance(currentPlayer, 1, source, target);
                                 currentPlayer->issueOrder(advanceOrder);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -495,7 +495,7 @@ void GameEngine::reinforcementPhase() {
                                 }
 
                                 if (source->isAdjacentTo(target) && target->getPlayer() == currentPlayer) {
-                                    Order* advanceOrder = new Advance(1, source, target);
+                                    Order* advanceOrder = new Advance(currentPlayer, 1, source, target);
                                     currentPlayer->issueOrder(advanceOrder);
 
                                     std::cout << "Player ID " << currentPlayer->getId()
@@ -527,6 +527,7 @@ void GameEngine::reinforcementPhase() {
                                     nullptr,
                                     attackList[0],
                                     0,
+                                    currentPlayer,
                                     nullptr);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -541,6 +542,7 @@ void GameEngine::reinforcementPhase() {
                                     nullptr,
                                     defendList[0],
                                     0,
+                                    currentPlayer,
                                     nullptr);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -555,6 +557,7 @@ void GameEngine::reinforcementPhase() {
                                     defendList[0],
                                     defendList[1],
                                     1,
+                                    currentPlayer,
                                     nullptr);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -569,6 +572,7 @@ void GameEngine::reinforcementPhase() {
                                     nullptr,
                                     defendList[0],
                                     5,
+                                    currentPlayer,
                                     nullptr);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -585,6 +589,7 @@ void GameEngine::reinforcementPhase() {
                                             nullptr,
                                             nullptr,
                                             0,
+                                            currentPlayer,
                                             otherPlayer);
 
                                         std::cout << "Player ID " << currentPlayer->getId()
@@ -726,6 +731,14 @@ void GameEngine::executeOrdersPhase() {
     }
 
     removeEliminatedPlayers();
+    
+    for(Player* player : *players){
+        player->clearNegotiatedWith();
+        if(player->getConqueredThisTurn()){
+            gameDeck->draw(player->getHand());
+            player->setConqueredThisTurn(false);
+        }
+    }
 
     if (checkWin()) {
         Player* winner = getWinner();
