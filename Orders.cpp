@@ -167,11 +167,67 @@ bool Advance::validate(){
 // Execute Method
 void Advance::execute(){
     if(validate()){
-        this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-        this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
-        this->executed = true;
-        this->effect = std::to_string(this->armyCount) + " armies advanced from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
-        std::cout << "Advance Order Executed!" << std::endl;
+        // No attack
+        if(this->issuingPlayer == this->target->getPlayer()){
+            this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+            this->target->setArmySize(this->target->getArmySize() + this->armyCount);
+            
+            this->executed = true;
+            this->effect = std::to_string(this->armyCount) + " armies advanced from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
+            std::cout << "Advance Order Executed!" << std::endl;
+        }
+        // Attack
+        else {
+            /*CHECK NEGOTIATION
+             * IF NEGOTIATED:
+             *      EXIT
+             * ELSE:
+             *      CONTINUE
+             */
+            
+            int attackerCausalties = 0;
+            for(int i = 0;  i < this->armyCount; i++){
+                int randomNum = rand() % 100; // Random number between 100 possible values
+                if(randomNum >= 70)
+                    attackerCausalties++;
+            }
+            
+            int defenderCausalties = 0;
+            for(int i = 0; i < this->target->getArmySize(); i++){
+                int randomNum = rand() % 100; // Random number between 100 possible values
+                if(randomNum >= 60)
+                    defenderCausalties++;
+            }
+            
+            // Defender wins
+            if(this->target->getArmySize() - defenderCausalties > 0){
+                this->target->setArmySize(this->target->getArmySize() - defenderCausalties);
+                this->source->setArmySize(this->source->getArmySize() - attackerCausalties);
+                
+                this->executed = true;
+                this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Defender held their territory!\n" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                std::cout << "Advance Order Executed!" << std::endl;
+            }
+            // Attacker wins
+            else {
+                // Transfer ownership
+                this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + this->target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Attackers conquered the territory!\n";            
+                for(size_t i = 0; i < this->target->getPlayer()->getTerritories()->size(); i++){
+                    if (this->target->getPlayer()->getTerritories()->at(i) == this->target){
+                        this->target->getPlayer()->getTerritories()->erase(this->target->getPlayer()->getTerritories()->begin() + i);
+                        break;
+                    }
+                }
+                this->target->setPlayer(this->issuingPlayer);
+                this->issuingPlayer->getTerritories()->push_back(this->target);
+                this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+                this->target->setArmySize(this->armyCount - attackerCausalties);
+                
+                this->executed = true;
+                this->effect += this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                std::cout << "Advance Order Executed!" << std::endl;
+            }
+        }
     }
 }
 
@@ -390,7 +446,7 @@ std::ostream& operator <<(std::ostream& os, const Airlift& order){
 // Negotiate Class Definitions
 // Parameterized Constructor
 Negotiate::Negotiate(Player* issuingPlayer, Player* targetPlayer) : Order(issuingPlayer), targetPlayer(targetPlayer) {
-    this->description = "Negotiating with Player " + std::to_string(*(targetPlayer->getId()));
+    this->description = "Negotiating with Player " + std::to_string((targetPlayer->getId()));
 }
 
 // Copy Constructor
@@ -432,7 +488,7 @@ void Negotiate::execute(){
         // Prevent attacks between the 2 players until the end of the turn
         
         this->executed = true;
-        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(*targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
+        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
     }
 }
 
