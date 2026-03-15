@@ -6,17 +6,39 @@ Player::Player() {
     ordersList = new OrdersList();
     hand = nullptr;
     id = nullptr;
+    reinforcementPool = new int(0);
 }
 
 Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
-    this->territories = new vector<Territory*>(*territories);
-    this->ordersList = new OrdersList(*ordersList);
-    this->hand = nullptr; //new Hand(*hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
-    if(id == nullptr) {
-        this->id = nullptr;
+    //handle nullptr territories
+    if (territories != nullptr) {
+        this->territories = new vector<Territory*>(*territories);
     } else {
-        this->id = new int(*id);
+        this->territories = new vector<Territory*>();
     }
+
+    //handle nullptr ordersList
+    if (ordersList != nullptr) {
+        this->ordersList = new OrdersList(*ordersList);
+    } else {
+        this->ordersList = new OrdersList();
+    }
+
+    //handle hand
+    if (hand != nullptr) {
+        this->hand = new Hand(*hand);
+    } else {
+        this->hand = nullptr;
+    }
+
+    //handle id
+    if (id != nullptr) {
+        this->id = new int(*id);
+    } else {
+        this->id = nullptr;
+    }
+
+    reinforcementPool = new int(0);
 }
 
 Player::Player(const Player& p){
@@ -33,7 +55,11 @@ Player::Player(const Player& p){
     } else {
         this->id = new int(*p.id);
     }
-    
+    if (p.reinforcementPool != nullptr) {
+        this->reinforcementPool = new int(*p.reinforcementPool);
+    } else {
+        this->reinforcementPool = new int(0);
+    }
 }
 
 Player::~Player() {
@@ -41,6 +67,7 @@ Player::~Player() {
     delete ordersList;
     delete hand;
     delete id;
+    delete reinforcementPool;
 }
 
 Player& Player::operator=(const Player& p) {
@@ -51,6 +78,7 @@ Player& Player::operator=(const Player& p) {
     delete ordersList;
     delete hand;
     delete id;
+    delete reinforcementPool;
 
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
@@ -65,6 +93,13 @@ Player& Player::operator=(const Player& p) {
     } else {
         this->id = new int(*p.id);
     }
+
+    if (p.reinforcementPool != nullptr) {
+        this->reinforcementPool = new int(*p.reinforcementPool);
+    } else {
+        this->reinforcementPool = new int(0);
+    }
+
     return *this;
 }
 
@@ -109,6 +144,37 @@ std::vector<Territory*>* Player::getTerritories() {
     return territories;
 }
 
-int* Player::getId() {
-    return id;
+int Player::getId() {
+    if (id == nullptr) {
+        return 0;  // Default ID if not set
+    }
+    return *id;
+}
+
+void Player::setHand(Hand* h) {
+    delete hand;  // Clean up old hand
+    hand = h;
+}
+
+int Player::getReinforcementPool() const {
+    if (reinforcementPool == nullptr) {
+        return 0;
+    }
+    return *reinforcementPool;
+}
+
+void Player::setReinforcementPool(int armies) {
+    if (reinforcementPool == nullptr) {
+        reinforcementPool = new int(armies);
+    } else {
+        *reinforcementPool = armies;
+    }
+}
+
+void Player::addToReinforcementPool(int armies) {
+    if (reinforcementPool == nullptr) {
+        reinforcementPool = new int(armies);
+    } else {
+        *reinforcementPool += armies;
+    }
 }
