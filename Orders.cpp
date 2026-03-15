@@ -225,6 +225,7 @@ void Advance::execute(){
                 
                 this->executed = true;
                 this->effect += this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                this->issuingPlayer->setConqueredThisTurn(true);
                 std::cout << "Advance Order Executed!" << std::endl;
             }
         }

@@ -7,6 +7,7 @@ Player::Player() {
     hand = nullptr;
     id = nullptr;
     reinforcementPool = new int(0);
+    conqueredThisTurn = false;
 }
 
 Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
