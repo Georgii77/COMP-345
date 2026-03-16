@@ -492,7 +492,18 @@ void GameEngine::reinforcementPhase() {
                             }
 
                             if (source->isAdjacentTo(target) && target->getPlayer() != currentPlayer) {
-                                Order* advanceOrder = new Advance(currentPlayer, 1, source, target);
+                                int armiesToAdvance = source->getArmySize() - 1;
+
+                                if (armiesToAdvance > 0) {
+                                    Order* advanceOrder = new Advance(currentPlayer, armiesToAdvance, source, target);
+                                    currentPlayer->issueOrder(advanceOrder);
+
+                                    std::cout << "Player ID " << currentPlayer->getId()
+                                        << " issued an Advance order of "
+                                        << armiesToAdvance << " armies from "
+                                        << source->getName() << " to "
+                                        << target->getName() << "\n";
+                                }
                                 currentPlayer->issueOrder(advanceOrder);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -527,7 +538,18 @@ void GameEngine::reinforcementPhase() {
                                 }
 
                                 if (source->isAdjacentTo(target) && target->getPlayer() == currentPlayer) {
-                                    Order* advanceOrder = new Advance(currentPlayer, 1, source, target);
+                                    int armiesToAdvance = source->getArmySize() - 1;
+
+                                    if (armiesToAdvance > 0) {
+                                        Order* advanceOrder = new Advance(currentPlayer, armiesToAdvance, source, target);
+                                        currentPlayer->issueOrder(advanceOrder);
+
+                                        std::cout << "Player ID " << currentPlayer->getId()
+                                            << " issued an Advance order of "
+                                            << armiesToAdvance << " armies from "
+                                            << source->getName() << " to "
+                                            << target->getName() << "\n";
+                                    }
                                     currentPlayer->issueOrder(advanceOrder);
 
                                     std::cout << "Player ID " << currentPlayer->getId()
