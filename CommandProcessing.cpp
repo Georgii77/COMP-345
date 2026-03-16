@@ -52,6 +52,11 @@ Command::~Command() {
 
 void Command::saveEffect(const string& effectStr) {
     effect = effectStr;
+    notify(this);
+}
+
+string Command::stringToLog() {
+    return "Command: " + command + " | Effect: " + effect;
 }
 
 string Command::getCommand() const {
@@ -108,7 +113,12 @@ string CommandProcessor::readCommand() {
 Command* CommandProcessor::saveCommand(const string& commandStr) {
     Command* command = new Command(commandStr);
     commands->push_back(command);
+    notify(this);
     return command;
+}
+
+string CommandProcessor::stringToLog() {
+    return "Command saved: " + commands->back()->getCommand();
 }
 
 Command* CommandProcessor::getCommand() {

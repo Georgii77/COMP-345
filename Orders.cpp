@@ -48,6 +48,10 @@ std::ostream& operator <<(std::ostream& os, const Order& order){
     return os;
 }
 
+std::string Order::stringToLog() {
+    return "Order executed: " + effect;
+}
+
 // Deploy Class Definitions
 // Parameterized Constructor 
 Deploy::Deploy(Player* issuingPlayer, int armyCount, Territory* target) : Order(issuingPlayer), armyCount(armyCount), target(target){
@@ -99,6 +103,7 @@ void Deploy::execute(){
         this->executed = true;
         this->effect = std::to_string(this->armyCount) + " armies deployed in " + this->target->getName() + ". Current armies in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Deploy Order Executed!" << std::endl;
+        notify(this);
     }
 }
 
@@ -177,6 +182,7 @@ void Advance::execute(){
             this->executed = true;
             this->effect = std::to_string(this->armyCount) + " armies advanced from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
             std::cout << "Advance Order Executed!" << std::endl;
+            notify(this);
         }
         // Attack
         else {
@@ -215,6 +221,7 @@ void Advance::execute(){
                     this->executed = true;
                     this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Defender held their territory!\n" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
                     std::cout << "Advance Order Executed!" << std::endl;
+                    notify(this);
                 }
                 // Attacker wins
                 else {
@@ -235,6 +242,7 @@ void Advance::execute(){
                     this->effect += this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
                     this->issuingPlayer->setConqueredThisTurn(true);
                     std::cout << "Advance Order Executed!" << std::endl;
+                    notify(this);
                 }
             }
         }
@@ -304,6 +312,7 @@ void Bomb::execute(){
         this->executed = true;
         this->effect = this->target->getName() + " has been bombed! Current army count in " + this->target->getName() + ": " + std::to_string(this->target->getArmySize());
         std::cout << "Bomb Order Executed!" << std::endl;
+        notify(this);
     }
 }
 
@@ -376,6 +385,7 @@ void Blockade::execute(){
         this->executed = true;
         this->effect = this->target->getName() + " has been blockaded and has become a neutral territory. The current army size in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Blockade Order Executed!" << std::endl;
+        notify(this);
     }
 }
 
@@ -444,6 +454,7 @@ void Airlift::execute(){
         this->executed = true;
         this->effect = std::to_string(this->armyCount) + " armies airlifted from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
         std::cout << "Airlift Order Executed!" << std::endl;
+        notify(this);
     }
 }
 
@@ -506,7 +517,9 @@ void Negotiate::execute(){
         this->targetPlayer->addToNegotiatedWith(this->issuingPlayer);
         
         this->executed = true;
-        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
+        this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";
+        std::cout << "Negotiate Order Executed!" << std::endl;
+        notify(this);
     }
 }
 
@@ -562,9 +575,14 @@ OrdersList& OrdersList::operator=(const OrdersList& other){
     return *this;
 }
 
+std::string OrdersList::stringToLog() {
+    return "Order added to list: " + orders.back()->stringToLog();
+}
+
 // Add method (To add orders to the list)
 void OrdersList::add(Order *order){
     orders.push_back(order);
+    notify(this);
 }
 
 // Move Method

@@ -6,10 +6,11 @@
 #include <vector>
 #include <fstream>
 #include "GameEngine.h"
+#include "LoggingObserver.h"
 
 using namespace std;
 
-class Command {
+class Command : public Subject, public ILoggable {
 
     public:
         Command();
@@ -21,6 +22,7 @@ class Command {
         void saveEffect(const string &effectStr);
         string getCommand() const;
         string getEffect() const;
+        string stringToLog() override;
 
         friend ostream& operator<<(ostream &out, const Command  &command);
 
@@ -29,7 +31,7 @@ class Command {
         string effect;
 };
 
-class CommandProcessor {
+class CommandProcessor : public Subject, public ILoggable {
 
     public:
         CommandProcessor();
@@ -40,6 +42,7 @@ class CommandProcessor {
         Command* getCommand();
         virtual bool validate(Command *command, const GameEngine &ge) const;
         const vector<Command*>* getCommands() const;
+        string stringToLog() override;
 
         friend ostream& operator<<(ostream& out, const CommandProcessor& cp);
         

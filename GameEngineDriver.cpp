@@ -16,6 +16,8 @@ int main() {
     std::cout << "Final state: " << game->getCurrentState() << "\n";
     std::cout << "========================================\n";
 
+	game->mainGameLoop(); // Start the main game loop 
+
     delete game;
     return 0;
 }

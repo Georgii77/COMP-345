@@ -301,6 +301,11 @@ void GameEngine::executeCommand(const std::string& command) {
 void GameEngine::transition(const std::string& newState) {
     *currentState = newState;
     std::cout << "Transitioned to state: " << newState << "\n";
+    notify(this);
+}
+
+std::string GameEngine::stringToLog() {
+    return "GameEngine new state: " + *currentState;
 }
 
 /**
@@ -415,10 +420,37 @@ void GameEngine::reinforcementPhase() {
                     std::vector<Territory*> defendList = currentPlayer->toDefend();
 
                     if (!defendList.empty()) {
-                        Territory* target = defendList[0];
+                        std::cout << "Choose territory to deploy to:\n";
 
-                        int armiesToDeploy = 1;
-                        if (currentPlayer->getReinforcementPool() < armiesToDeploy) {
+                        for (size_t t = 0; t < defendList.size(); t++) {
+                            std::cout << t << ": " << defendList[t]->getName() << "\n";
+                        }
+
+                        int territoryChoice;
+                        std::cin >> territoryChoice;
+
+                        if (territoryChoice < 0 || territoryChoice >= defendList.size()) {
+                            territoryChoice = 0;
+                        }
+
+                        Territory* target = defendList[territoryChoice];
+
+                        std::cout << "Player " << currentPlayer->getId()
+                            << " reinforcement pool: "
+                            << currentPlayer->getReinforcementPool() << "\n";
+
+                        std::cout << "How many armies do you want to deploy to "
+                            << target->getName() << "? ";
+
+                        int armiesToDeploy;
+                        std::cin >> armiesToDeploy;
+
+                        // validate input
+                        if (armiesToDeploy <= 0) {
+                            armiesToDeploy = 1;
+                        }
+
+                        if (armiesToDeploy > currentPlayer->getReinforcementPool()) {
                             armiesToDeploy = currentPlayer->getReinforcementPool();
                         }
 
@@ -460,7 +492,18 @@ void GameEngine::reinforcementPhase() {
                             }
 
                             if (source->isAdjacentTo(target) && target->getPlayer() != currentPlayer) {
-                                Order* advanceOrder = new Advance(currentPlayer, 1, source, target);
+                                int armiesToAdvance = source->getArmySize() - 1;
+
+                                if (armiesToAdvance > 0) {
+                                    Order* advanceOrder = new Advance(currentPlayer, armiesToAdvance, source, target);
+                                    currentPlayer->issueOrder(advanceOrder);
+
+                                    std::cout << "Player ID " << currentPlayer->getId()
+                                        << " issued an Advance order of "
+                                        << armiesToAdvance << " armies from "
+                                        << source->getName() << " to "
+                                        << target->getName() << "\n";
+                                }
                                 currentPlayer->issueOrder(advanceOrder);
 
                                 std::cout << "Player ID " << currentPlayer->getId()
@@ -495,7 +538,18 @@ void GameEngine::reinforcementPhase() {
                                 }
 
                                 if (source->isAdjacentTo(target) && target->getPlayer() == currentPlayer) {
-                                    Order* advanceOrder = new Advance(currentPlayer, 1, source, target);
+                                    int armiesToAdvance = source->getArmySize() - 1;
+
+                                    if (armiesToAdvance > 0) {
+                                        Order* advanceOrder = new Advance(currentPlayer, armiesToAdvance, source, target);
+                                        currentPlayer->issueOrder(advanceOrder);
+
+                                        std::cout << "Player ID " << currentPlayer->getId()
+                                            << " issued an Advance order of "
+                                            << armiesToAdvance << " armies from "
+                                            << source->getName() << " to "
+                                            << target->getName() << "\n";
+                                    }
                                     currentPlayer->issueOrder(advanceOrder);
 
                                     std::cout << "Player ID " << currentPlayer->getId()

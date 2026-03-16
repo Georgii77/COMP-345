@@ -10,11 +10,12 @@
 #include <vector>
 #include "Map.h"
 #include "Player.h"
+#include "LoggingObserver.h"
 /**
  * GameEngine class - Controls the flow of the game using state transitions.
  * Manages game states, validates user commands, and orchestrates game components.
  */
-class GameEngine {
+class GameEngine : public Subject, public ILoggable {
     private:
         std::string* currentState; //current game state (e.g., "start", "map loaded")
         Map* gameMap; //pointer to the loaded game map
@@ -41,9 +42,11 @@ class GameEngine {
         bool checkWin() const;
         Player* getWinner() const;
         bool playerControlsContinent(Player* player, Continent* continent) const;
+        std::string stringToLog() override;
+
+        void transition(const std::string& newState);
 
     private:
-        void transition(const std::string& newState);
         void executeCommand(const std::string& command);
         
 };
