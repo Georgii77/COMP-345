@@ -94,6 +94,8 @@ bool Deploy::validate(){
 void Deploy::execute(){
     if(validate()){
         this->target->setArmySize(this->target->getArmySize() + this->armyCount);
+        this->issuingPlayer->setReinforcementPool(this->issuingPlayer->getReinforcementPool() - this->armyCount);
+        
         this->executed = true;
         this->effect = std::to_string(this->armyCount) + " armies deployed in " + this->target->getName() + ". Current armies in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Deploy Order Executed!" << std::endl;
