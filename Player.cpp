@@ -141,8 +141,38 @@ vector<Territory*> Player::toDefend() {
 }
 
 vector<Territory*> Player::toAttack() {
-    vector<Territory*> arbitraryList = *territories;
-    return arbitraryList;
+    vector<Territory*> attackList;
+
+    for (Territory* t : *territories) {
+        if (t == nullptr) {
+            continue;
+        }
+
+        const vector<Territory*>& adjacents = t->getAdjacents();
+
+        for (Territory* adj : adjacents) {
+            if (adj == nullptr) {
+                continue;
+            }
+
+            if (adj->getPlayer() != this) {
+                bool alreadyAdded = false;
+
+                for (Territory* existing : attackList) {
+                    if (existing == adj) {
+                        alreadyAdded = true;
+                        break;
+                    }
+                }
+
+                if (!alreadyAdded) {
+                    attackList.push_back(adj);
+                }
+            }
+        }
+    }
+
+    return attackList;
 }
 
 void Player::issueOrder(Order* order) {
