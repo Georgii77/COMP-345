@@ -7,8 +7,9 @@
 #include <string>
 #include <vector>
 #include "Map.h"
+#include "LoggingObserver.h"
 
-class Order {
+class Order : public Subject, public ILoggable {
 protected:
     Player* issuingPlayer;
     std::string description;
@@ -25,6 +26,7 @@ public:
     
     virtual bool validate() = 0;
     virtual void execute() = 0;
+    std::string stringToLog() override;
     friend std::ostream& operator <<(std::ostream& os, const Order& order);
 };
 
@@ -131,7 +133,7 @@ public:
 };
 
 
-class OrdersList {
+class OrdersList : public Subject, public ILoggable {
 private:
     std::vector<Order*> orders;
 
@@ -142,6 +144,7 @@ public:
     OrdersList& operator=(const OrdersList& other);
     
     void add(Order *order); // Needed since OrdersList isn't a vector. Rather, it uses a vector.
+    std::string stringToLog() override;
     void move(size_t fromIndex, size_t toIndex);
     void remove(size_t index);
     void executeOrders();
