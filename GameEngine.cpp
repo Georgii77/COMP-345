@@ -301,6 +301,11 @@ void GameEngine::executeCommand(const std::string& command) {
 void GameEngine::transition(const std::string& newState) {
     *currentState = newState;
     std::cout << "Transitioned to state: " << newState << "\n";
+    notify(this);
+}
+
+std::string GameEngine::stringToLog() {
+    return "GameEngine new state: " + *currentState;
 }
 
 /**
