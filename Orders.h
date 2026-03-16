@@ -10,11 +10,13 @@
 
 class Order {
 protected:
+    Player* issuingPlayer;
     std::string description;
     std::string effect;
     bool executed;
 public:
     Order();
+    Order(Player* issuingPlayer);
     virtual ~Order();
     Order(const Order& other);
     Order& operator=(const Order& other);
@@ -32,7 +34,7 @@ private:
     Territory* target;
 
 public:
-    Deploy(int armyCount, Territory* target);
+    Deploy(Player* issuingPlayer, int armyCount, Territory* target);
     Deploy(const Deploy& other);
     ~Deploy();
     Deploy& operator=(const Deploy& other);
@@ -51,7 +53,7 @@ private:
     Territory* target;
 
 public:
-    Advance(int armyCount,Territory* source, Territory* target);
+    Advance(Player* issuingPlayer, int armyCount,Territory* source, Territory* target);
     Advance(const Advance& other);
     ~Advance();
     Advance& operator=(const Advance& other);
@@ -67,7 +69,7 @@ private:
     Territory* target;
 
 public:
-    Bomb(Territory* target);
+    Bomb(Player* issuingPlayer, Territory* target);
     Bomb(const Bomb& other);
     ~Bomb();
     Bomb& operator=(const Bomb& other);
@@ -83,7 +85,7 @@ private:
     Territory* target;
 
 public:
-    Blockade(Territory* target);
+    Blockade(Player* issuingPlayer, Territory* target);
     Blockade(const Blockade& other);
     ~Blockade();
     Blockade& operator=(const Blockade& other);
@@ -101,7 +103,7 @@ private:
     Territory* target;
 
 public:
-    Airlift(int armyCount, Territory* source, Territory* target);
+    Airlift(Player* issuingPlayer, int armyCount, Territory* source, Territory* target);
     Airlift(const Airlift& other);
     ~Airlift();
     Airlift& operator=(const Airlift& other);
@@ -117,7 +119,7 @@ class Negotiate : public Order {
 private:
     Player* targetPlayer;
 public:
-    Negotiate(Player* targetPlayer);
+    Negotiate(Player* issuingPlayer, Player* targetPlayer);
     Negotiate(const Negotiate& other);
     ~Negotiate();
     Negotiate& operator=(const Negotiate& other);
@@ -144,6 +146,9 @@ public:
     void remove(size_t index);
     void executeOrders();
     friend std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList);
+    bool empty() const;
+    Order* getOrder(size_t index) const;
+    size_t size() const;
 };
 
 

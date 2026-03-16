@@ -1,4 +1,6 @@
 #include "Player.h"
+#include "Map.h"
+#include <vector>
 using namespace std;
 
 Player::Player() {
@@ -6,6 +8,8 @@ Player::Player() {
     ordersList = new OrdersList();
     hand = nullptr;
     id = nullptr;
+    reinforcementPool = new int(0);
+    conqueredThisTurn = false;
 }
 
 Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
@@ -36,12 +40,24 @@ Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* ha
     } else {
         this->id = nullptr;
     }
+
+    reinforcementPool = new int(0);
+    conqueredThisTurn = false;
+}
+
+// Neutral Player Constructor
+Player::Player(int* id){
+    this->id = id;
+    territories = new vector<Territory*>();
+    ordersList = nullptr;
+    hand = nullptr;
+    reinforcementPool = nullptr;
+    conqueredThisTurn = false;
 }
 
 Player::Player(const Player& p){
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
-    //hand = new Hand(*p.hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
     if (p.hand != nullptr) {
         this->hand = new Hand(*p.hand);
     } else {
@@ -52,7 +68,12 @@ Player::Player(const Player& p){
     } else {
         this->id = new int(*p.id);
     }
-    
+    if (p.reinforcementPool != nullptr) {
+        this->reinforcementPool = new int(*p.reinforcementPool);
+    } else {
+        this->reinforcementPool = new int(0);
+    }
+    this->conqueredThisTurn = p.conqueredThisTurn;
 }
 
 Player::~Player() {
@@ -60,6 +81,7 @@ Player::~Player() {
     delete ordersList;
     delete hand;
     delete id;
+    delete reinforcementPool;
 }
 
 Player& Player::operator=(const Player& p) {
@@ -70,10 +92,10 @@ Player& Player::operator=(const Player& p) {
     delete ordersList;
     delete hand;
     delete id;
+    delete reinforcementPool;
 
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
-    //hand = new Hand(*p.hand); when the hand class is implemented, this will be uncommented and the hand will be deep copied. For now, it is set to nullptr to avoid errors since the Hand class is not yet implemented.
     if (p.hand != nullptr) {
         this->hand = new Hand(*p.hand);
     } else {
@@ -84,6 +106,15 @@ Player& Player::operator=(const Player& p) {
     } else {
         this->id = new int(*p.id);
     }
+
+    if (p.reinforcementPool != nullptr) {
+        this->reinforcementPool = new int(*p.reinforcementPool);
+    } else {
+        this->reinforcementPool = new int(0);
+    }
+    
+    this->conqueredThisTurn = p.conqueredThisTurn;
+
     return *this;
 }
 
@@ -134,3 +165,58 @@ int Player::getId() {
     }
     return *id;
 }
+
+void Player::setHand(Hand* h) {
+    delete hand;  // Clean up old hand
+    hand = h;
+}
+
+int Player::getReinforcementPool() const {
+    if (reinforcementPool == nullptr) {
+        return 0;
+    }
+    return *reinforcementPool;
+}
+
+void Player::setReinforcementPool(int armies) {
+    if (reinforcementPool == nullptr) {
+        reinforcementPool = new int(armies);
+    } else {
+        *reinforcementPool = armies;
+    }
+}
+
+void Player::addToReinforcementPool(int armies) {
+    if (reinforcementPool == nullptr) {
+        reinforcementPool = new int(armies);
+    } else {
+        *reinforcementPool += armies;
+    }
+}
+
+bool Player::getConqueredThisTurn(){
+    return this->conqueredThisTurn;
+}
+
+Player* Player::getNeutralPlayer(){
+    return neutralPlayer;
+}
+
+void Player::setConqueredThisTurn(bool conqueredThisTurn){
+    this->conqueredThisTurn = conqueredThisTurn;
+}
+
+vector<Player*> Player::getNegotiatedWith(){
+    return this->negotiatedWith;
+}
+
+void Player::addToNegotiatedWith(Player* player){
+    negotiatedWith.push_back(player);
+}
+
+// Called at the end of each turn
+void Player::clearNegotiatedWith(){
+    negotiatedWith.clear();
+}
+
+Player* Player::neutralPlayer = new Player(new int(-1));

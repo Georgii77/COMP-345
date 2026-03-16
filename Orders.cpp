@@ -7,11 +7,15 @@
 #include <vector>
 
 // Order Class Definitions
-// Parameterized Constructor 
+// Default Constructor 
 Order::Order() : description(""), effect(""), executed(false){}
+
+// Parameterized Constructor
+Order::Order(Player* issuingPlayer) : issuingPlayer(issuingPlayer){}
 
 // Copy Constructor
 Order::Order(const Order& other){
+    this->issuingPlayer = other.issuingPlayer;
     this->description = other.description;
     this->effect = other.effect;
     this->executed = other.executed;
@@ -46,7 +50,7 @@ std::ostream& operator <<(std::ostream& os, const Order& order){
 
 // Deploy Class Definitions
 // Parameterized Constructor 
-Deploy::Deploy(int armyCount, Territory* target) : armyCount(armyCount), target(target){
+Deploy::Deploy(Player* issuingPlayer, int armyCount, Territory* target) : Order(issuingPlayer), armyCount(armyCount), target(target){
     this->description = "Deploy " + std::to_string(armyCount) + " armies to " + target->getName();
 }
 
@@ -77,7 +81,11 @@ Deploy* Deploy::clone() {
 
 // Validate Method
 bool Deploy::validate(){
-    if(this->target == nullptr || this->armyCount <= 0) return false;
+    if(this->issuingPlayer == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
+    
+    if(this->issuingPlayer->getReinforcementPool() < armyCount) return false;
+    
+    if(this->issuingPlayer != this->target->getPlayer()) return false;
     
     return true;
 }
@@ -107,7 +115,7 @@ std::ostream& operator <<(std::ostream& os, const Deploy& order){
 
 // Advance Class Definitions
 // Parameterized Constructor 
-Advance::Advance(int armyCount, Territory* source, Territory* target) : armyCount(armyCount), source(source), target(target) {
+Advance::Advance(Player* issuingPlayer, int armyCount, Territory* source, Territory* target) : Order(issuingPlayer), armyCount(armyCount), source(source), target(target) {
     this->description = std::to_string(this->armyCount) + " armies advancing from " + this->source->getName() + " to " + this->target->getName();
 }
 
@@ -142,6 +150,8 @@ Advance* Advance::clone() {
 bool Advance::validate(){
     if(this->source == nullptr ||this->target == nullptr || this->armyCount <= 0) return false;
     
+    if(this->issuingPlayer != this->source->getPlayer()) return false;
+    
     bool areAdjacent = false;
     for(Territory* t : this->source->getAdjacents()){
         if(t->getId() == this->target->getId()){
@@ -157,11 +167,75 @@ bool Advance::validate(){
 // Execute Method
 void Advance::execute(){
     if(validate()){
-        this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-        this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
-        this->executed = true;
-        this->effect = std::to_string(this->armyCount) + " armies advanced from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
-        std::cout << "Advance Order Executed!" << std::endl;
+        // No attack
+        if(this->issuingPlayer == this->target->getPlayer()){
+            this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+            this->target->setArmySize(this->target->getArmySize() + this->armyCount);
+            
+            this->executed = true;
+            this->effect = std::to_string(this->armyCount) + " armies advanced from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
+            std::cout << "Advance Order Executed!" << std::endl;
+        }
+        // Attack
+        else {
+            bool negotiated = false;
+            for(Player* negotiatedWithPlayer : this->issuingPlayer->getNegotiatedWith()){
+                if(negotiatedWithPlayer == this->target->getPlayer()){
+                   negotiated = true;
+                    break;
+                }
+            }
+             
+            if(negotiated){
+                this->executed = false;
+                this->effect = "Advance cancelled. Player " + std::to_string(this->issuingPlayer->getId()) + " and Player " + std::to_string(this->target->getPlayer()->getId()) +" have a peace negotation in effect!";
+            }
+            else {
+                int attackerCausalties = 0;
+                for(int i = 0;  i < this->armyCount; i++){
+                    int randomNum = rand() % 100; // Random number between 100 possible values
+                    if(randomNum >= 70)
+                        attackerCausalties++;
+                }
+                
+                int defenderCausalties = 0;
+                for(int i = 0; i < this->target->getArmySize(); i++){
+                    int randomNum = rand() % 100; // Random number between 100 possible values
+                    if(randomNum >= 60)
+                        defenderCausalties++;
+                }
+                
+                // Defender wins
+                if(this->target->getArmySize() - defenderCausalties > 0){
+                    this->target->setArmySize(this->target->getArmySize() - defenderCausalties);
+                    this->source->setArmySize(this->source->getArmySize() - attackerCausalties);
+                    
+                    this->executed = true;
+                    this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Defender held their territory!\n" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                    std::cout << "Advance Order Executed!" << std::endl;
+                }
+                // Attacker wins
+                else {
+                    // Transfer ownership
+                    this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + this->target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Attackers conquered the territory!\n";            
+                    for(size_t i = 0; i < this->target->getPlayer()->getTerritories()->size(); i++){
+                        if (this->target->getPlayer()->getTerritories()->at(i) == this->target){
+                            this->target->getPlayer()->getTerritories()->erase(this->target->getPlayer()->getTerritories()->begin() + i);
+                            break;
+                        }
+                    }
+                    this->target->setPlayer(this->issuingPlayer);
+                    this->issuingPlayer->getTerritories()->push_back(this->target);
+                    this->source->setArmySize(this->source->getArmySize() - this->armyCount);
+                    this->target->setArmySize(this->armyCount - attackerCausalties);
+                    
+                    this->executed = true;
+                    this->effect += this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
+                    this->issuingPlayer->setConqueredThisTurn(true);
+                    std::cout << "Advance Order Executed!" << std::endl;
+                }
+            }
+        }
     }
 }
 
@@ -180,7 +254,7 @@ std::ostream& operator <<(std::ostream& os, const Advance& order){
 
 // Bomb Class Definitions
 // Parameterized Constructor 
-Bomb::Bomb(Territory* target) : target(target){
+Bomb::Bomb(Player* issuingPlayer, Territory* target) : Order(issuingPlayer), target(target){
     this->description = "Bombing " + this->target->getName();
 }
 
@@ -209,16 +283,16 @@ Bomb* Bomb::clone() {
 
 // Validate Method
 bool Bomb::validate(){
-    if(this->target == nullptr) return false;
-    
-    // Check if target doesn't belong to the issuing Player
+    if(this->target == nullptr || this->issuingPlayer == nullptr ||this->issuingPlayer == this->target->getPlayer()) return false;
     
     // Check if any of the Player's territories are adjacent to target
+    bool targetAdjacent = false;
+    for (Territory* territories : *this->issuingPlayer->getTerritories()){
+        if(territories->isAdjacentTo(target)) targetAdjacent = true;
+    }
     
-    // If it's adjacent:
-    //      return true;
-    
-    return true;
+    // Check if it's adjacent:
+    return targetAdjacent;
 }
 
 // Execute Method
@@ -246,7 +320,7 @@ std::ostream& operator <<(std::ostream& os, const Bomb& order){
 
 // Blockade Class Definitions
 // Parameterized Constructor 
-Blockade::Blockade(Territory* target) : target(target) {
+Blockade::Blockade(Player* issuingPlayer, Territory* target) : Order(issuingPlayer), target(target) {
     this->description = "Blockading " + this->target->getName();
 }
 
@@ -277,10 +351,7 @@ Blockade* Blockade::clone() {
 bool Blockade::validate(){
     if(this->target == nullptr) return false;
     
-    // Check if target belongs to this Player
-    // 
-    // If it belongs to them:
-    //      return true
+    if(this->issuingPlayer != this->target->getPlayer()) return false;
     
     return true;
 }
@@ -288,8 +359,18 @@ bool Blockade::validate(){
 // Execute Method
 void Blockade::execute(){
     if(validate()){
-        this->target->setArmySize(this->target->getArmySize() * 3); // Triple the number of armies in the territory
+        this->target->setArmySize(this->target->getArmySize() * 2); // Double the number of armies in the territory
+        
         // Set Territory to neutral
+        for(size_t i = 0; i < this->target->getPlayer()->getTerritories()->size(); i++){
+            if (this->target->getPlayer()->getTerritories()->at(i) == this->target){
+                this->target->getPlayer()->getTerritories()->erase(this->target->getPlayer()->getTerritories()->begin() + i);
+                break;
+            }
+        }
+        this->target->setPlayer(Player::getNeutralPlayer());
+        Player::getNeutralPlayer()->getTerritories()->push_back(this->target);
+        
         this->executed = true;
         this->effect = this->target->getName() + " has been blockaded and has become a neutral territory. The current army size in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
         std::cout << "Blockade Order Executed!" << std::endl;
@@ -311,7 +392,7 @@ std::ostream& operator <<(std::ostream& os, const Blockade& order){
 
 // Airlift Class Definitions
 // Parameterized Constructor 
-Airlift::Airlift(int armyCount, Territory* source, Territory* target) : armyCount(armyCount), source(source), target(target) {
+Airlift::Airlift(Player* issuingPlayer, int armyCount, Territory* source, Territory* target) : Order(issuingPlayer), armyCount(armyCount), source(source), target(target) {
     this->description = "Airlifting " + std::to_string(armyCount) + " armies from " + this->source->getName() + " to " + this->target->getName();
 }
 
@@ -344,7 +425,11 @@ Airlift* Airlift::clone() {
 
 // Validate Method
 bool Airlift::validate(){
-    if(this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
+    if(this->issuingPlayer == nullptr||this->source == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
+    
+    if(this->issuingPlayer != this->source->getPlayer() && this->issuingPlayer != this->source->getPlayer()) return false;
+    
+    if(this->source->getArmySize() < this->armyCount) return false;
 
     return true;
 }
@@ -352,9 +437,8 @@ bool Airlift::validate(){
 // Execute Method
 void Airlift::execute(){
     if(validate()){
-        // Check if this->source belongs to this Player (not for this assignment)
         this->source->setArmySize(this->source->getArmySize() - this->armyCount);
-        this->target->setArmySize(this->target->getArmySize() + this->armyCount); // Check if it is an attack and setArmySize accordingly
+        this->target->setArmySize(this->target->getArmySize() + this->armyCount);
         this->executed = true;
         this->effect = std::to_string(this->armyCount) + " armies airlifted from " + this->source->getName() + " to " + this->target->getName() + " (" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + ", " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + ")";
         std::cout << "Airlift Order Executed!" << std::endl;
@@ -376,8 +460,8 @@ std::ostream& operator <<(std::ostream& os, const Airlift& order){
 
 // Negotiate Class Definitions
 // Parameterized Constructor
-Negotiate::Negotiate(Player* targetPlayer) : targetPlayer(targetPlayer) {
-    this->description = "Negotiating with Player " + std::to_string(targetPlayer->getId());
+Negotiate::Negotiate(Player* issuingPlayer, Player* targetPlayer) : Order(issuingPlayer), targetPlayer(targetPlayer) {
+    this->description = "Negotiating with Player " + std::to_string((targetPlayer->getId()));
 }
 
 // Copy Constructor
@@ -405,7 +489,7 @@ Negotiate* Negotiate::clone() {
 
 // Validate Method
 bool Negotiate::validate(){
-    if(targetPlayer == nullptr){
+    if(targetPlayer == nullptr || targetPlayer == this->issuingPlayer){
         std::cout << "Invalid Player!" << std::endl;
         return false;
     }
@@ -416,7 +500,8 @@ bool Negotiate::validate(){
 // Execute Method
 void Negotiate::execute(){
     if(validate()){
-        // Prevent attacks between the 2 players until the end of the turn
+        this->issuingPlayer->addToNegotiatedWith(targetPlayer);
+        this->targetPlayer->addToNegotiatedWith(this->issuingPlayer);
         
         this->executed = true;
         this->effect = "Peace has been successfully negotiated with Player " + std::to_string(targetPlayer->getId()) + ". No attacks allowed between the players until the end of the round!";        std::cout << "Negotiate Order Executed!" << std::endl;
@@ -532,4 +617,19 @@ std::ostream& operator <<(std::ostream& os, const OrdersList& ordersList){
     }
     
     return os;
+}
+
+bool OrdersList::empty() const {
+    return orders.empty();
+}
+
+Order* OrdersList::getOrder(size_t index) const {
+    if (index >= orders.size()) {
+        return nullptr;
+    }
+    return orders[index];
+}
+
+size_t OrdersList::size() const {
+    return orders.size();
 }

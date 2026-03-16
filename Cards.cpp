@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "Cards.h"
 #include "Orders.h"
+#include "Player.h"
 
 
 
@@ -41,10 +42,11 @@ std::ostream& operator<<(std::ostream& os, const Card& obj) {
 }
 
 // If the order subclass to be creates does not require one or more of the parameters below, a null pointer is passed
-void Card::play(int index, OrdersList* orders, Hand* hand, Deck* deck, Territory* source, Territory* target, int armyCount, Player* player) {
+void Card::play(int index, OrdersList* orders, Hand* hand, Deck* deck, Territory* source, Territory* target, int armyCount, Player* issuingPlayer, Player* targetPlayer) {
     // orders, hand and deck parameters cannot be null
     if (!orders || !hand || !deck) {
-        throw std::invalid_argument("Card::play received null OrdersList/Hand/Deck");}
+        throw std::invalid_argument("Card::play received null OrdersList/Hand/Deck");
+    }
 
     // check if index exists in the hand
     if (index < 0 || static_cast<size_t>(index) >= hand->size()) {
@@ -61,31 +63,35 @@ void Card::play(int index, OrdersList* orders, Hand* hand, Deck* deck, Territory
     // create an order of the correct subclass
     if (t == "bomb") {
         if (!target) throw std::invalid_argument("Bomb card requires target territory");
-            created = new Bomb(target);}
+            created = new Bomb(issuingPlayer, target);
+    }
 
     else if (t == "blockade") {
         if (!target) throw std::invalid_argument("Blockade card requires target territory");
-        created = new Blockade(target);}
+        created = new Blockade(issuingPlayer, target);
+    }
     
     else if (t == "airlift") {
-        if (!source || !target) throw std::invalid_argument("Airlift card requires source+target territories");
+        if (!issuingPlayer || !source || !target) throw std::invalid_argument("Airlift card requires source+target territories + issuingPlayer");
         if (armyCount <= 0) throw std::invalid_argument("Airlift card requires armyCount > 0");
-        created = new Airlift(armyCount, source, target);}
+        created = new Airlift(issuingPlayer, armyCount, source, target);
+    }
 
     else if (t == "reinforcement") {
-        if (!target) throw std::invalid_argument("Reinforcement card requires target territory");
-        if (armyCount <= 0) throw std::invalid_argument("Reinforcement card requires armyCount > 0");
-        created = new Deploy(armyCount, target);}
+        issuingPlayer->addToReinforcementPool(5);
+    }
 
     else if (t == "diplomacy") {
-        if (!player) throw std::invalid_argument("Diplomacy card requires target player");
-        created = new Negotiate(player);}
+        if (!issuingPlayer || !targetPlayer) throw std::invalid_argument("Diplomacy card requires issuingPlayer + target player");
+        created = new Negotiate(issuingPlayer, targetPlayer);
+    }
     else {
-        throw std::runtime_error("Unknown card type: " + t);}
+        throw std::runtime_error("Unknown card type: " + t);
+    }
     
 
     // add the order to the list of orders 
-    orders->add(created);
+    if(created) orders->add(created);
 
     // remove the card from hand 
     Card removed = hand->removeCard(static_cast<size_t>(index));

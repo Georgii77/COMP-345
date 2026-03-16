@@ -19,6 +19,7 @@ class GameEngine {
         std::string* currentState; //current game state (e.g., "start", "map loaded")
         Map* gameMap; //pointer to the loaded game map
         std::vector<Player*>* players; //vector of pointers to all players in the game
+        Deck* gameDeck; //shared deck for all players
 
     public:
         GameEngine(); //def const
@@ -30,10 +31,21 @@ class GameEngine {
         void processCommand(const std::string& command);
         std::string getCurrentState() const;
         bool isValidTransition(const std::string& command) const;
+        void startupPhase();  //startup phase method
+        void reinforcementPhase();
+        void issueOrdersPhase();
+        void executeOrdersPhase();
+        void mainGameLoop();
+
+        void removeEliminatedPlayers();
+        bool checkWin() const;
+        Player* getWinner() const;
+        bool playerControlsContinent(Player* player, Continent* continent) const;
 
     private:
         void transition(const std::string& newState);
         void executeCommand(const std::string& command);
+        
 };
 
 
