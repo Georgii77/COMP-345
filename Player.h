@@ -10,6 +10,8 @@
 
 using namespace std;
 
+class PlayerStrategy;
+
 class Player{
     public:
         Player();
@@ -40,6 +42,10 @@ class Player{
         vector<Player*> getNegotiatedWith();
         void addToNegotiatedWith(Player* player);
         void clearNegotiatedWith();
+
+        void setStrategy(PlayerStrategy* strategy);
+        PlayerStrategy* getStrategy() const;
+
     private:
         vector<Territory*>* territories;
         OrdersList* ordersList;
@@ -49,6 +55,7 @@ class Player{
         bool conqueredThisTurn;
         vector<Player*> negotiatedWith;
         static Player* neutralPlayer;
+        PlayerStrategy* strategy;
 };
 
 #endif

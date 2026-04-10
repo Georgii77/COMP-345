@@ -504,12 +504,6 @@ void GameEngine::reinforcementPhase() {
                                         << source->getName() << " to "
                                         << target->getName() << "\n";
                                 }
-                                currentPlayer->issueOrder(advanceOrder);
-
-                                std::cout << "Player ID " << currentPlayer->getId()
-                                    << " issued an Advance order from "
-                                    << source->getName() << " to "
-                                    << target->getName() << "\n";
 
                                 issuedOrder = true;
                                 break;
@@ -550,12 +544,6 @@ void GameEngine::reinforcementPhase() {
                                             << source->getName() << " to "
                                             << target->getName() << "\n";
                                     }
-                                    currentPlayer->issueOrder(advanceOrder);
-
-                                    std::cout << "Player ID " << currentPlayer->getId()
-                                        << " issued a defensive Advance order from "
-                                        << source->getName() << " to "
-                                        << target->getName() << "\n";
 
                                     issuedOrder = true;
                                     break;

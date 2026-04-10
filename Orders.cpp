@@ -5,6 +5,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include "PlayerStrategies.h"
 
 // Order Class Definitions
 // Default Constructor 
@@ -212,6 +213,8 @@ void Advance::execute(){
                     if(randomNum >= 60)
                         defenderCausalties++;
                 }
+
+                Player* defender = this->target->getPlayer();
                 
                 // Defender wins
                 if(this->target->getArmySize() - defenderCausalties > 0){
@@ -222,6 +225,13 @@ void Advance::execute(){
                     this->effect = "Player " + std::to_string(this->issuingPlayer->getId()) + " attacked Player " +  std::to_string(this->target->getPlayer()->getId()) + "'s territory " + target->getName() + " from " + this->source->getName() + " with " + std::to_string(this->armyCount) + " against " + std::to_string(this->target->getArmySize() + defenderCausalties) + " defenders. Defender held their territory!\n" + this->source->getName() + ": " + std::to_string(this->source->getArmySize()) + " armies remaining, " + this->target->getName() + ": " + std::to_string(this->target->getArmySize()) + " armies remaining.";
                     std::cout << "Advance Order Executed!" << std::endl;
                     notify(this);
+
+                    if (defender->getStrategy() != nullptr &&
+                        defender->getStrategy()->getStrategyName() == "Neutral") {
+                        std::cout << "Neutral Player " << defender->getId()
+                                  << " was attacked! Switching to Aggressive strategy!\n";
+                        defender->setStrategy(new AggressivePlayerStrategy(defender));
+                    }
                 }
                 // Attacker wins
                 else {
@@ -243,6 +253,13 @@ void Advance::execute(){
                     this->issuingPlayer->setConqueredThisTurn(true);
                     std::cout << "Advance Order Executed!" << std::endl;
                     notify(this);
+
+                    if (defender->getStrategy() != nullptr &&
+                        defender->getStrategy()->getStrategyName() == "Neutral") {
+                        std::cout << "Neutral Player " << defender->getId()
+                                  << " was attacked! Switching to Aggressive strategy!\n";
+                        defender->setStrategy(new AggressivePlayerStrategy(defender));
+                    }
                 }
             }
         }

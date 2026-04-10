@@ -1,6 +1,8 @@
 #include "Player.h"
 #include "Map.h"
 #include <vector>
+#include "PlayerStrategies.h"
+
 using namespace std;
 
 Player::Player() {
@@ -10,6 +12,7 @@ Player::Player() {
     id = nullptr;
     reinforcementPool = new int(0);
     conqueredThisTurn = false;
+    strategy = nullptr;
 }
 
 Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* hand, int* id) {
@@ -43,6 +46,7 @@ Player::Player(vector<Territory*>* territories, OrdersList* ordersList, Hand* ha
 
     reinforcementPool = new int(0);
     conqueredThisTurn = false;
+    strategy = nullptr;
 }
 
 // Neutral Player Constructor
@@ -53,6 +57,7 @@ Player::Player(int* id){
     hand = nullptr;
     reinforcementPool = nullptr;
     conqueredThisTurn = false;
+    strategy = nullptr;
 }
 
 Player::Player(const Player& p){
@@ -74,6 +79,13 @@ Player::Player(const Player& p){
         this->reinforcementPool = new int(0);
     }
     this->conqueredThisTurn = p.conqueredThisTurn;
+
+    if (p.strategy != nullptr) {
+        this->strategy = p.strategy->clone();
+        this->strategy->setPlayer(this);
+    } else {
+        this->strategy = nullptr;
+    }
 }
 
 Player::~Player() {
@@ -82,6 +94,7 @@ Player::~Player() {
     delete hand;
     delete id;
     delete reinforcementPool;
+    delete strategy;
 }
 
 Player& Player::operator=(const Player& p) {
@@ -93,6 +106,7 @@ Player& Player::operator=(const Player& p) {
     delete hand;
     delete id;
     delete reinforcementPool;
+    delete strategy;
 
     territories = new vector<Territory*>(*p.territories);
     ordersList = new OrdersList(*p.ordersList);
@@ -115,6 +129,13 @@ Player& Player::operator=(const Player& p) {
     
     this->conqueredThisTurn = p.conqueredThisTurn;
 
+    if (p.strategy != nullptr) {
+        this->strategy = p.strategy->clone();
+        this->strategy->setPlayer(this);
+    } else {
+        this->strategy = nullptr;
+    }
+
     return *this;
 }
 
@@ -132,15 +153,29 @@ ostream& operator<<(ostream& out, const Player& p){
         out << "  ID: " << *p.id << endl;
     else
         out << "  ID: none" << endl;
+
+    if (p.strategy != nullptr)
+        out << "  Strategy: " << p.strategy->getStrategyName() << endl;
+    else
+        out << "  Strategy: none" << endl;
+
     return out;
 }
 
 vector<Territory*> Player::toDefend() {
+    if (strategy != nullptr) {
+        return strategy->toDefend();
+    }
+
     vector<Territory*> arbitraryList = *territories;
     return arbitraryList;
 }
 
 vector<Territory*> Player::toAttack() {
+    if (strategy != nullptr) {
+        return strategy->toAttack();
+    }
+
     vector<Territory*> attackList;
 
     for (Territory* t : *territories) {
@@ -247,6 +282,15 @@ void Player::addToNegotiatedWith(Player* player){
 // Called at the end of each turn
 void Player::clearNegotiatedWith(){
     negotiatedWith.clear();
+}
+
+void Player::setStrategy(PlayerStrategy* s) {
+    delete strategy;  // clean up old strategy
+    strategy = s;
+}
+
+PlayerStrategy* Player::getStrategy() const {
+    return strategy;
 }
 
 Player* Player::neutralPlayer = new Player(new int(-1));
