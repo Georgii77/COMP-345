@@ -53,7 +53,10 @@ public:
     explicit NeutralPlayerStrategy(Player* p = nullptr) { player = p; }
     std::string getStrategyName() const override { return "Neutral"; }
     PlayerStrategy* clone() const override { return new NeutralPlayerStrategy(player); }
-    // TODO Person 3: implement issueOrder(), toDefend(), toAttack(), and Neutral→Aggressive switch
+
+    void issueOrder() override;
+    std::vector<Territory*> toAttack() override;
+    std::vector<Territory*> toDefend() override;
 };
 
 
@@ -62,5 +65,9 @@ public:
     explicit CheaterPlayerStrategy(Player* p = nullptr) { player = p; }
     std::string getStrategyName() const override { return "Cheater"; }
     PlayerStrategy* clone() const override { return new CheaterPlayerStrategy(player); }
-    // TODO Person 3: implement issueOrder(), toDefend(), toAttack()
+
+    // Person 3: Cheater player overrides
+    void issueOrder() override;
+    std::vector<Territory*> toAttack() override;
+    std::vector<Territory*> toDefend() override;
 };
