@@ -1,138 +1,66 @@
-#ifndef PLAYERSTRATEGIES_H
-#define PLAYERSTRATEGIES_H
-
-#include <vector>
-#include <iostream>
+#pragma once
 #include <string>
+#include <vector>
 
-// Forward declarations
 class Player;
 class Territory;
-class Order;
 
-/**
- * PlayerStrategy - Abstract base class for the Strategy pattern.
- * Each concrete strategy implements its own version of issueOrder(),
- * toAttack(), and toDefend().
- */
 class PlayerStrategy {
-protected:
-    Player* player; // back-pointer to the player using this strategy
-
 public:
-    PlayerStrategy(Player* player);
-    PlayerStrategy(const PlayerStrategy& other);
-    PlayerStrategy& operator=(const PlayerStrategy& other);
-    virtual ~PlayerStrategy();
-
-    // Pure virtual methods
-    virtual void issueOrder() = 0;
-    virtual std::vector<Territory*> toAttack() = 0;
-    virtual std::vector<Territory*> toDefend() = 0;
-
-    // Clone for polymorphic copy
-    virtual PlayerStrategy* clone() const = 0;
-
-    // Getters/setters
-    Player* getPlayer() const;
-    void setPlayer(Player* p);
-
-    // Stream insertion
-    friend std::ostream& operator<<(std::ostream& os, const PlayerStrategy& strategy);
+    virtual ~PlayerStrategy() = default;
     virtual std::string getStrategyName() const = 0;
+    virtual PlayerStrategy* clone() const = 0;
+    virtual void setPlayer(Player* p) { player = p; }
+    virtual Player* getPlayer() const { return player; }
+    virtual void issueOrder() {}
+    virtual std::vector<Territory*> toDefend() { return {}; }
+    virtual std::vector<Territory*> toAttack() { return {}; }
+
+protected:
+    Player* player = nullptr;
 };
 
-/**
- * HumanPlayerStrategy - Requires user interaction to make decisions.
- * (Stub — to be implemented by Person 1)
- */
+
 class HumanPlayerStrategy : public PlayerStrategy {
 public:
-    HumanPlayerStrategy(Player* player);
-    HumanPlayerStrategy(const HumanPlayerStrategy& other);
-    HumanPlayerStrategy& operator=(const HumanPlayerStrategy& other);
-    ~HumanPlayerStrategy() override;
-
-    void issueOrder() override;
-    std::vector<Territory*> toAttack() override;
-    std::vector<Territory*> toDefend() override;
-    PlayerStrategy* clone() const override;
-    std::string getStrategyName() const override;
+    explicit HumanPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override { return "Human"; }
+    PlayerStrategy* clone() const override { return new HumanPlayerStrategy(player); }
+    // TODO Person 1: implement issueOrder(), toDefend(), toAttack()
 };
 
-/**
- * AggressivePlayerStrategy - Focuses on attack.
- * Deploys/advances armies on its strongest country, then always
- * advances to enemy territories until it cannot do so anymore.
- * (Stub — to be implemented by Person 2)
- */
+
 class AggressivePlayerStrategy : public PlayerStrategy {
 public:
-    AggressivePlayerStrategy(Player* player);
-    AggressivePlayerStrategy(const AggressivePlayerStrategy& other);
-    AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other);
-    ~AggressivePlayerStrategy() override;
-
-    void issueOrder() override;
-    std::vector<Territory*> toAttack() override;
-    std::vector<Territory*> toDefend() override;
-    PlayerStrategy* clone() const override;
-    std::string getStrategyName() const override;
+    explicit AggressivePlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override { return "Aggressive"; }
+    PlayerStrategy* clone() const override { return new AggressivePlayerStrategy(player); }
+    // TODO Person 2: implement issueOrder(), toDefend(), toAttack()
 };
 
-/**
- * BenevolentPlayerStrategy - Focuses on protecting weak countries.
- * Deploys/advances armies on its weakest countries, never attacks.
- * (Stub — to be implemented by Person 2)
- */
+
 class BenevolentPlayerStrategy : public PlayerStrategy {
 public:
-    BenevolentPlayerStrategy(Player* player);
-    BenevolentPlayerStrategy(const BenevolentPlayerStrategy& other);
-    BenevolentPlayerStrategy& operator=(const BenevolentPlayerStrategy& other);
-    ~BenevolentPlayerStrategy() override;
-
-    void issueOrder() override;
-    std::vector<Territory*> toAttack() override;
-    std::vector<Territory*> toDefend() override;
-    PlayerStrategy* clone() const override;
-    std::string getStrategyName() const override;
+    explicit BenevolentPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override { return "Benevolent"; }
+    PlayerStrategy* clone() const override { return new BenevolentPlayerStrategy(player); }
+    // TODO Person 2: implement issueOrder(), toDefend(), toAttack()
 };
 
-/**
- * NeutralPlayerStrategy - Never issues any order.
- * If a Neutral player is attacked, it becomes an Aggressive player.
- */
+
 class NeutralPlayerStrategy : public PlayerStrategy {
 public:
-    NeutralPlayerStrategy(Player* player);
-    NeutralPlayerStrategy(const NeutralPlayerStrategy& other);
-    NeutralPlayerStrategy& operator=(const NeutralPlayerStrategy& other);
-    ~NeutralPlayerStrategy() override;
-
-    void issueOrder() override;
-    std::vector<Territory*> toAttack() override;
-    std::vector<Territory*> toDefend() override;
-    PlayerStrategy* clone() const override;
-    std::string getStrategyName() const override;
+    explicit NeutralPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override { return "Neutral"; }
+    PlayerStrategy* clone() const override { return new NeutralPlayerStrategy(player); }
+    // TODO Person 3: implement issueOrder(), toDefend(), toAttack(), and Neutral→Aggressive switch
 };
 
-/**
- * CheaterPlayerStrategy - Automatically conquers all territories
- * adjacent to its own territories (only once per turn).
- */
+
 class CheaterPlayerStrategy : public PlayerStrategy {
 public:
-    CheaterPlayerStrategy(Player* player);
-    CheaterPlayerStrategy(const CheaterPlayerStrategy& other);
-    CheaterPlayerStrategy& operator=(const CheaterPlayerStrategy& other);
-    ~CheaterPlayerStrategy() override;
-
-    void issueOrder() override;
-    std::vector<Territory*> toAttack() override;
-    std::vector<Territory*> toDefend() override;
-    PlayerStrategy* clone() const override;
-    std::string getStrategyName() const override;
+    explicit CheaterPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override { return "Cheater"; }
+    PlayerStrategy* clone() const override { return new CheaterPlayerStrategy(player); }
+    // TODO Person 3: implement issueOrder(), toDefend(), toAttack()
 };
-
-#endif

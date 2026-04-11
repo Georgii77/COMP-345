@@ -44,6 +44,10 @@ class CommandProcessor : public Subject, public ILoggable {
         const vector<Command*>* getCommands() const;
         string stringToLog() override;
 
+         
+        // tournament -M <map1,map2,...> -P <strat1,strat2,...> -G <numGames> -D <maxTurns>
+        static bool parseTournamentCommand(const string& cmdStr, TournamentParams& params);
+
         friend ostream& operator<<(ostream& out, const CommandProcessor& cp);
         
     protected:

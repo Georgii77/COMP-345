@@ -263,3 +263,105 @@ ostream& operator<<(ostream& out, const FileCommandProcessorAdapter& adapter) {
     out << "FileCommandProcessorAdapter using " << *adapter.fileLineReader;
     return out;
 }
+
+
+// Returns true if the command is well-formed and all constraints are met
+bool CommandProcessor::parseTournamentCommand(const string& cmdStr, TournamentParams& params) {
+    params.maps.clear();
+    params.strategies.clear();
+    params.numGames = 0;
+    params.maxTurns = 0;
+
+    istringstream iss(cmdStr);
+    string token;
+    iss >> token; // consume "tournament"
+
+    while (iss >> token) {
+        if (token == "-M") {
+            string mapsStr;
+            if (!(iss >> mapsStr)) {
+                cout << "Tournament: missing argument after -M.\n";
+                return false;
+            }
+            istringstream ms(mapsStr);
+            string entry;
+            while (getline(ms, entry, ',')) {
+                // trim
+                size_t s = entry.find_first_not_of(" \t");
+                size_t e = entry.find_last_not_of(" \t");
+                if (s != string::npos)
+                    params.maps.push_back(entry.substr(s, e - s + 1));
+            }
+        } else if (token == "-P") {
+            string stratStr;
+            if (!(iss >> stratStr)) {
+                cout << "Tournament: missing argument after -P.\n";
+                return false;
+            }
+            istringstream ss(stratStr);
+            string entry;
+            while (getline(ss, entry, ',')) {
+                size_t s = entry.find_first_not_of(" \t");
+                size_t e = entry.find_last_not_of(" \t");
+                if (s != string::npos)
+                    params.strategies.push_back(entry.substr(s, e - s + 1));
+            }
+        } else if (token == "-G") {
+            if (!(iss >> params.numGames)) {
+                cout << "Tournament: missing or invalid argument after -G.\n";
+                return false;
+            }
+        } else if (token == "-D") {
+            if (!(iss >> params.maxTurns)) {
+                cout << "Tournament: missing or invalid argument after -D.\n";
+                return false;
+            }
+        } else {
+            cout << "Tournament: unknown flag '" << token << "'.\n";
+            return false;
+        }
+    }
+
+    // check number of maps is between 1 and 5
+    if (params.maps.empty() || params.maps.size() > 5) {
+        cout << "Tournament: -M must specify 1–5 map filenames (got "
+             << params.maps.size() << ").\n";
+        return false;
+    }
+
+    // check number of strategies is between 2 and 4
+    if (params.strategies.size() < 2 || params.strategies.size() > 4) {
+        cout << "Tournament: -P must specify 2–4 strategies (got "
+             << params.strategies.size() << ").\n";
+        return false;
+    }
+
+    const vector<string> validStrategies = {
+        "Aggressive", "Benevolent", "Neutral", "Cheater"
+    };
+    for (const string& strat : params.strategies) {
+        bool found = false;
+        for (const string& valid : validStrategies) {
+            if (strat == valid) { found = true; break; }
+        }
+        if (!found) {
+            cout << "Tournament: invalid strategy '" << strat
+                 << "'. Valid options: Aggressive, Benevolent, Neutral, Cheater.\n";
+            return false;
+        }
+    }
+    // check that number of games is between 1 and 5
+    if (params.numGames < 1 || params.numGames > 5) {
+        cout << "Tournament: -G must be between 1 and 5 (got "
+             << params.numGames << ").\n";
+        return false;
+    }
+    // check that number of turns is between 10 and 50
+    if (params.maxTurns < 10 || params.maxTurns > 50) {
+        cout << "Tournament: -D must be between 10 and 50 (got "
+             << params.maxTurns << ").\n";
+        return false;
+    }
+
+    return true;
+}
