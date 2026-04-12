@@ -3,6 +3,7 @@
 #include "Map.h"
 #include "Orders.h"
 #include "Cards.h"
+#include <algorithm>
 #include <cstddef>
 #include <iostream>
 #include <string>
@@ -87,7 +88,7 @@ void HumanPlayerStrategy::issueOrder() {
     
     // Advance orders & Cards
     while (true) {
-        std::cout << "Currently owned territories:\n";
+        std::cout << "\nCurrently owned territories:\n";
         for (size_t t = 0; t < defendList.size(); t++) {
             std::cout << t << ": " << defendList[t]->getName() << ". [Current Army Count: " << defendList[t]->getArmySize() << "]\n";
         }
@@ -95,7 +96,7 @@ void HumanPlayerStrategy::issueOrder() {
         std::cout << "\nWhich would you like to do?\n";
         std::cout << "1. Issue Advance Order.\n";
         std::cout << "2. Play Card.\n";
-        std::cout << "3. Exit this menu.\n";
+        std::cout << "3. Exit this menu.\n\n";
         
         int choice;
         std::cin >> choice;
@@ -116,7 +117,7 @@ void HumanPlayerStrategy::issueOrder() {
                     std::cin >> territorySource;
                     
                     if(territorySource >= defendList.size())
-                        std::cout << "Invalid choice. Try again.\n";
+                        std::cout << "\nInvalid choice. Try again.\n";
                     
                 } while(territorySource >= defendList.size());
                 
@@ -137,18 +138,18 @@ void HumanPlayerStrategy::issueOrder() {
                         std::cin >> territoryTarget;
                         
                         if(territoryTarget >= adjacentToSource.size())
-                            std::cout << "Invalid choice. Try again.\n";
+                            std::cout << "\nInvalid choice. Try again.\n";
                         
                     } while (territoryTarget >= adjacentToSource.size());
                     
                     do {
-                        std::cout << "How many armies do you want to advance from " << defendList[territorySource]->getName() << " to "
+                        std::cout << "\nHow many armies do you want to advance from " << defendList[territorySource]->getName() << " to "
                                 << adjacentToSource[territoryTarget]->getName() << "?\n";
                                 
                         std::cin >> armiesToAdvance;
                         
                         if(armiesToAdvance == 0 || armiesToAdvance >= defendList[territorySource]->getArmySize())
-                            std::cout << "Invalid choice. Try again.\n";
+                            std::cout << "\nInvalid choice. Try again.\n";
                         
                     } while (armiesToAdvance == 0 || armiesToAdvance >= defendList[territorySource]->getArmySize());
                               
@@ -156,29 +157,29 @@ void HumanPlayerStrategy::issueOrder() {
                     player->issueOrder(advanceOrder);
                 }
                 else {
-                    std::cout << "Not enough armies to advance from this territory.\n";
+                    std::cout << "\nNot enough armies to advance from this territory.\n";
                 }
                 break;
             
             // Play card
             case 2:  {
                 if (player->getHand()->size() == 0){ // Hand is empty
-                    std::cout << "You have no cards to play.\n";
+                    std::cout << "\nYou have no cards to play.\n\n";
                     break;
                 }
                 
-                std::cout << "Available cards:\n";
+                std::cout << "\nAvailable cards:\n";
                 for(size_t t = 0; t < player->getHand()->size(); t++){
                     std::cout << t << ": " << player->getHand()->getCard(t) << ".\n";
                 }
                 
-                std::cout << "Which card would you like to play?\n";
+                std::cout << "\nWhich card would you like to play?\n";
                 size_t cardChosen;
                 
                 do {
                     std::cin >> cardChosen;
                     if (cardChosen >= player->getHand()->size())
-                        std::cout << "Invalid choice. Try again.\n";
+                        std::cout << "\nInvalid choice. Try again.\n";
                     
                 } while (cardChosen >= player->getHand()->size());
                 
@@ -187,7 +188,7 @@ void HumanPlayerStrategy::issueOrder() {
                 if (cardType == "bomb"){
                     size_t chosenTarget;
                     do {
-                        std::cout << "Select which territory you'd like to bomb:\n";
+                        std::cout << "\nSelect which territory you'd like to bomb:\n";
                         for(size_t t = 0; t < attackList.size(); t++){
                             std::cout << t << ": " << attackList[t]->getName() << ". [Current Army Count: " << attackList[t]->getArmySize() << "]. "
                                     << "Owned by Player " << attackList[t]->getPlayer()->getId() << "\n";
@@ -196,7 +197,7 @@ void HumanPlayerStrategy::issueOrder() {
                         std::cin >> chosenTarget;
                         
                         if(chosenTarget >= attackList.size())
-                            std::cout << "Invalid choice. Try again.\n";
+                            std::cout << "\nInvalid choice. Try again.\n";
                         
                     } while(chosenTarget >= attackList.size());
                     
@@ -230,32 +231,32 @@ void HumanPlayerStrategy::issueOrder() {
                             std::cin >> territoryTarget;
                             
                             if(territoryTarget >= defendList.size())
-                                std::cout << "Invalid choice. Try again.\n";
+                                std::cout << "\nInvalid choice. Try again.\n";
                             
                         } while (territoryTarget >= defendList.size());
                         
                         do {
-                            std::cout << "How many armies do you want to airlift from " << defendList[territorySource]->getName() << " to "
+                            std::cout << "\nHow many armies do you want to airlift from " << defendList[territorySource]->getName() << " to "
                                     << defendList[territoryTarget]->getName() << "?\n";
                                     
                             std::cin >> armiesToAirlift;
                             
                             if(territorySource == territoryTarget || armiesToAirlift == 0 || armiesToAirlift >= defendList[territorySource]->getArmySize())
-                                std::cout << "Invalid choice. Try again.\n";
+                                std::cout << "\nInvalid choice. Try again.\n";
                             
                         } while (territorySource == territoryTarget || armiesToAirlift == 0 || armiesToAirlift >= defendList[territorySource]->getArmySize());
                                   
                         player->getHand()->getCard(cardChosen).play((int)cardChosen, player->getOrdersList(), player->getHand(), deck, defendList[territorySource], defendList[territoryTarget], armiesToAirlift, player, nullptr);
                     }
                     else {
-                        std::cout << "Not enough armies to airlift from this territory.\n";
+                        std::cout << "\nNot enough armies to airlift from this territory.\n";
                     }
                 }
                 else if (cardType == "blockade") {
                     size_t chosenTarget;
                     
                     do {
-                        std::cout << "Which of your territories would you like to blockade?\n";
+                        std::cout << "\nWhich of your territories would you like to blockade?\n";
                         for (size_t t = 0; t < defendList.size(); t++) {
                             std::cout << t << ": " << defendList[t]->getName() << ". [Current Army Count: " << defendList[t]->getArmySize() << "]\n";
                         }
@@ -263,7 +264,7 @@ void HumanPlayerStrategy::issueOrder() {
                         std::cin >> chosenTarget;
                         
                         if(chosenTarget >= defendList.size())
-                            std::cout << "Invalid choice. Try again.\n";
+                            std::cout << "\nInvalid choice. Try again.\n";
                         
                     } while(chosenTarget >= defendList.size());
                     
@@ -276,9 +277,10 @@ void HumanPlayerStrategy::issueOrder() {
                 }
                 else if (cardType == "diplomacy") {
                     size_t playerChosen;
+                    std::sort(allplayers->begin(), allplayers->end());
                     
                     do {
-                        std::cout << "Which player do you want to negotiate with?\n";
+                        std::cout << "\nWhich player do you want to negotiate with?\n";
                         for(size_t t = 0; t < allplayers->size(); t++){
                             if((*allplayers)[t] != player){
                                 std::cout << t << ": " << (*allplayers)[t]->getId() << "\n";
@@ -286,7 +288,7 @@ void HumanPlayerStrategy::issueOrder() {
                         }
                         std::cin >> playerChosen;
                         if(playerChosen >= allplayers->size() || (*allplayers)[playerChosen] == player)
-                            std::cout << "Invalid choice. Try again\n";
+                            std::cout << "\nInvalid choice. Try again\n";
                     } while(playerChosen >= allplayers->size() || (*allplayers)[playerChosen] == player);
                     
                     
@@ -295,7 +297,7 @@ void HumanPlayerStrategy::issueOrder() {
                 break;
             }
             case 3: // Exit menu
-                std::cout << "Player ID " << player->getId() << " has no more orders to issue.\n";
+                std::cout << "\nPlayer ID " << player->getId() << " has no more orders to issue.\n\n";
                 return;
         }
     }
