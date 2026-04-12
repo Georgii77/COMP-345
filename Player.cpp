@@ -214,6 +214,13 @@ void Player::issueOrder(Order* order) {
     ordersList->add(order);
 }
 
+// Delegates to the corresponding methods in the PlayerStrategy member
+void Player::issueOrder(){
+    if(strategy){
+        strategy->issueOrder();
+    }
+}
+
 Hand* Player::getHand() {
     return hand;
 }

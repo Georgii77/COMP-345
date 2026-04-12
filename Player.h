@@ -25,6 +25,7 @@ class Player{
         vector<Territory*> toDefend();
         vector<Territory*> toAttack();
         void issueOrder(Order* order);  
+        void issueOrder(); // Delegates to the corresponding methods in the PlayerStrategy member
         
         Hand* getHand();
         OrdersList* getOrdersList();
