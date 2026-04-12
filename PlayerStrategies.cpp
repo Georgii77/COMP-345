@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,11 @@ void PlayerStrategy::setDeck(Deck* deck) {
 
 void PlayerStrategy::setAllPlayers(std::vector<Player*>* allplayers) {
     this->allplayers = allplayers;
+}
+
+std::ostream& operator<<(std::ostream& os, const PlayerStrategy& obj) {
+    os << "PlayerStrategy for player: " << (obj.player ? obj.player->getName() : "None");
+    return os;
 }
 
 // ============================================================
@@ -75,7 +81,6 @@ void HumanPlayerStrategy::issueOrder() {
                 armiesToDeploy = player->getReinforcementPool();
             }
             
-
             Territory* target = defendList[territoryChoice];
             Order* deployOrder = new Deploy(player, armiesToDeploy, target);
             player->issueOrder(deployOrder);
@@ -291,7 +296,6 @@ void HumanPlayerStrategy::issueOrder() {
                             std::cout << "\nInvalid choice. Try again\n";
                     } while(playerChosen >= allplayers->size() || (*allplayers)[playerChosen] == player);
                     
-                    
                     player->getHand()->getCard(cardChosen).play((int)cardChosen, player->getOrdersList(), player->getHand(), deck, nullptr, nullptr, 0, player, (*allplayers)[playerChosen]);
                 }
                 break;
@@ -302,7 +306,6 @@ void HumanPlayerStrategy::issueOrder() {
         }
     }
 }
-
 
 /**
  * HumanPlayerStrategy::toAttack()
@@ -350,10 +353,265 @@ std::vector<Territory*> HumanPlayerStrategy::toDefend() {
     return *player->getTerritories();
 }
 
+// ============================================================
+//                 AggressivePlayerStrategy
+// ============================================================
+
+AggressivePlayerStrategy::AggressivePlayerStrategy(Player* p) {
+    player = p;
+}
+
+AggressivePlayerStrategy::AggressivePlayerStrategy(const AggressivePlayerStrategy& other)
+    : PlayerStrategy(other) {}
+
+AggressivePlayerStrategy& AggressivePlayerStrategy::operator=(const AggressivePlayerStrategy& other) {
+    if (this == &other) return *this;
+    player = other.player;
+    return *this;
+}
+
+std::string AggressivePlayerStrategy::getStrategyName() const {
+    return "Aggressive";
+}
+
+PlayerStrategy* AggressivePlayerStrategy::clone() const {
+    return new AggressivePlayerStrategy(player);
+}
+
+Territory* AggressivePlayerStrategy::getStrongestTerritory() const {
+    if (player == nullptr || player->getTerritories() == nullptr || player->getTerritories()->empty()) {
+        return nullptr;
+    }
+
+    Territory* strongest = nullptr;
+    int maxArmies = std::numeric_limits<int>::min();
+
+    for (Territory* territory : *player->getTerritories()) {
+        if (territory != nullptr && territory->getArmySize() > maxArmies) {
+            maxArmies = territory->getArmySize();
+            strongest = territory;
+        }
+    }
+
+    return strongest;
+}
+
+std::vector<Territory*> AggressivePlayerStrategy::toDefend() {
+    std::vector<Territory*> result;
+
+    if (player == nullptr || player->getTerritories() == nullptr) {
+        return result;
+    }
+
+    result = *player->getTerritories();
+
+    // Sort strongest to weakest so reinforcements go to the strongest territory
+    std::sort(result.begin(), result.end(),
+         [](Territory* a, Territory* b) {
+             if (a == nullptr && b == nullptr) return false;
+             if (a == nullptr) return false;
+             if (b == nullptr) return true;
+             return a->getArmySize() > b->getArmySize();
+         });
+
+    return result;
+}
+
+std::vector<Territory*> AggressivePlayerStrategy::toAttack() {
+    std::vector<Territory*> result;
+    Territory* strongest = getStrongestTerritory();
+
+    if (strongest == nullptr) {
+        return result;
+    }
+
+    // Only attack from the strongest territory
+    for (Territory* adjacent : strongest->getAdjacents()) {
+        if (adjacent != nullptr && adjacent->getPlayer() != player) {
+            result.push_back(adjacent);
+        }
+    }
+
+    // Sort weakest enemy first so we attack easiest targets first
+    std::sort(result.begin(), result.end(),
+         [](Territory* a, Territory* b) {
+             if (a == nullptr && b == nullptr) return false;
+             if (a == nullptr) return false;
+             if (b == nullptr) return true;
+             return a->getArmySize() < b->getArmySize();
+         });
+
+    return result;
+}
+
+void AggressivePlayerStrategy::issueOrder() {
+    if (player == nullptr || player->getTerritories() == nullptr) {
+        return;
+    }
+
+    Territory* strongest = getStrongestTerritory();
+    if (strongest == nullptr) {
+        return;
+    }
+
+    int reinforcementPool = player->getReinforcementPool();
+
+    // Deploy all reinforcements to the strongest territory
+    if (reinforcementPool > 0) {
+        player->issueOrder(new Deploy(player, reinforcementPool, strongest));
+        player->setReinforcementPool(0);
+        return;
+    }
+
+    // Advance from strongest territory to an adjacent enemy territory
+    if (strongest->getArmySize() > 1) {
+        std::vector<Territory*> targets = toAttack();
+
+        for (Territory* target : targets) {
+            if (target != nullptr && strongest->isAdjacentTo(target) && target->getPlayer() != player) {
+                int armiesToSend = strongest->getArmySize() - 1;
+                if (armiesToSend > 0) {
+                    player->issueOrder(new Advance(player, armiesToSend, strongest, target));
+                    return;
+                }
+            }
+        }
+    }
+
+    // If no attack possible, move armies from other territories toward the strongest
+    for (Territory* source : *player->getTerritories()) {
+        if (source == nullptr || source == strongest) {
+            continue;
+        }
+
+        if (source->isAdjacentTo(strongest) && source->getArmySize() > 1) {
+            int armiesToMove = source->getArmySize() - 1;
+            player->issueOrder(new Advance(player, armiesToMove, source, strongest));
+            return;
+        }
+    }
+}
+
+std::ostream& operator<<(std::ostream& out, const AggressivePlayerStrategy& strategy) {
+    out << "AggressivePlayerStrategy";
+    return out;
+}
+
+// ============================================================
+//                 BenevolentPlayerStrategy
+// ============================================================
+
+BenevolentPlayerStrategy::BenevolentPlayerStrategy(Player* p) {
+    player = p;
+}
+
+BenevolentPlayerStrategy::BenevolentPlayerStrategy(const BenevolentPlayerStrategy& other)
+    : PlayerStrategy(other) {}
+
+BenevolentPlayerStrategy& BenevolentPlayerStrategy::operator=(const BenevolentPlayerStrategy& other) {
+    if (this != &other) {
+        player = other.player;
+    }
+    return *this;
+}
+
+std::string BenevolentPlayerStrategy::getStrategyName() const {
+    return "Benevolent";
+}
+
+PlayerStrategy* BenevolentPlayerStrategy::clone() const {
+    return new BenevolentPlayerStrategy(player);
+}
+
+std::vector<Territory*> BenevolentPlayerStrategy::toAttack() {
+    // Benevolent never attacks enemy territories
+    return std::vector<Territory*>();
+}
+
+std::vector<Territory*> BenevolentPlayerStrategy::toDefend() {
+    std::vector<Territory*> result;
+
+    if (player == nullptr || player->getTerritories() == nullptr) {
+        return result;
+    }
+
+    result = *player->getTerritories();
+
+    // Sort weakest to strongest so reinforcements go to the weakest territory
+    std::sort(result.begin(), result.end(),
+         [](Territory* a, Territory* b) {
+             if (a == nullptr && b == nullptr) return false;
+             if (a == nullptr) return false;
+             if (b == nullptr) return true;
+             return a->getArmySize() < b->getArmySize();
+         });
+
+    return result;
+}
+
+void BenevolentPlayerStrategy::issueOrder() {
+    if (player == nullptr || player->getTerritories() == nullptr) {
+        return;
+    }
+
+    std::vector<Territory*> defendList = toDefend();
+    if (defendList.empty() || defendList.front() == nullptr) {
+        return;
+    }
+
+    Territory* weakest = defendList.front();
+    int reinforcementPool = player->getReinforcementPool();
+
+    // Deploy all reinforcements on weakest territory
+    if (reinforcementPool > 0) {
+        player->issueOrder(new Deploy(player, reinforcementPool, weakest));
+        player->setReinforcementPool(0);
+        return;
+    }
+
+    // Move armies from stronger adjacent friendly territories to weakest territory
+    Territory* bestSource = nullptr;
+    int maxArmies = -1;
+
+    for (Territory* source : *player->getTerritories()) {
+        if (source == nullptr || source == weakest) {
+            continue;
+        }
+
+        if (source->getPlayer() == player &&
+            source->isAdjacentTo(weakest) &&
+            source->getArmySize() > 1 &&
+            source->getArmySize() > maxArmies) {
+            bestSource = source;
+            maxArmies = source->getArmySize();
+        }
+    }
+
+    if (bestSource != nullptr) {
+        int armiesToMove = (bestSource->getArmySize() - 1) / 2;
+        if (armiesToMove <= 0) {
+            armiesToMove = 1;
+        }
+        player->issueOrder(new Advance(player, armiesToMove, bestSource, weakest));
+    }
+}
+
+std::ostream& operator<<(std::ostream& out, const BenevolentPlayerStrategy& strategy) {
+    out << "BenevolentPlayerStrategy";
+    return out;
+}
 
 // ============================================================
 // NeutralPlayerStrategy
 // ============================================================
+
+std::string NeutralPlayerStrategy::getStrategyName() const {
+    return "Neutral";
+}
+
+PlayerStrategy* NeutralPlayerStrategy::clone() const {
+    return new NeutralPlayerStrategy(player);
+}
 
 /**
  * NeutralPlayerStrategy::issueOrder()
@@ -386,6 +644,14 @@ std::vector<Territory*> NeutralPlayerStrategy::toDefend() {
 // ============================================================
 // CheaterPlayerStrategy
 // ============================================================
+
+std::string CheaterPlayerStrategy::getStrategyName() const {
+    return "Cheater";
+}
+
+PlayerStrategy* CheaterPlayerStrategy::clone() const {
+    return new CheaterPlayerStrategy(player);
+}
 
 /**
  * CheaterPlayerStrategy::issueOrder()
