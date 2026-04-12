@@ -15,6 +15,55 @@
 #include <sstream>
 
 
+static std::string formatTournamentReportForLog(
+    const TournamentParams& params,
+    const std::vector<std::vector<std::string>>& results)
+{
+    std::ostringstream oss;
+    oss << "Tournament mode:\n";
+    oss << "M: ";
+    for (size_t i = 0; i < params.maps.size(); ++i) {
+        if (i > 0) {
+            oss << ", ";
+        }
+        oss << params.maps[i];
+    }
+    oss << "\nP: ";
+    for (size_t i = 0; i < params.strategies.size(); ++i) {
+        if (i > 0) {
+            oss << ", ";
+        }
+        oss << params.strategies[i];
+    }
+    oss << "\nG: " << params.numGames << "\n";
+    oss << "D: " << params.maxTurns << "\n";
+    oss << "Results:\n";
+    oss << "\t";
+    for (int g = 1; g <= params.numGames; ++g) {
+        oss << "Game " << g;
+        if (g < params.numGames) {
+            oss << "\t";
+        }
+    }
+    oss << "\n";
+    for (size_t m = 0; m < results.size(); ++m) {
+        oss << "Map " << (m + 1);
+        if (m < params.maps.size()) {
+            oss << " (" << params.maps[m] << ")";
+        }
+        oss << "\t";
+        for (size_t g = 0; g < results[m].size(); ++g) {
+            oss << results[m][g];
+            if (g + 1 < results[m].size()) {
+                oss << "\t";
+            }
+        }
+        oss << "\n";
+    }
+    return oss.str();
+}
+
+
 GameEngine::GameEngine() {
     currentState = new std::string("start");
     gameMap = nullptr;
@@ -22,6 +71,7 @@ GameEngine::GameEngine() {
     gameDeck = new Deck(50); 
     // inTournament is auto-set to false
     inTournament = false;
+    tournamentReportForLog = nullptr;
 }
 
 //deconstructor
@@ -33,6 +83,7 @@ GameEngine::~GameEngine() {
     }
     delete players;
     delete gameDeck;
+    delete tournamentReportForLog;
 }
 
 //copy constructor
@@ -47,11 +98,16 @@ GameEngine::GameEngine(const GameEngine& ge) {
     }
     inTournament = ge.inTournament;
     tournamentResults = ge.tournamentResults;
+    tournamentReportForLog = ge.tournamentReportForLog
+        ? new std::string(*ge.tournamentReportForLog)
+        : nullptr;
 }
 
 //assignment operator
 GameEngine& GameEngine::operator=(const GameEngine& ge) {
     if (this != &ge) {
+        delete tournamentReportForLog;
+        tournamentReportForLog = nullptr;
         delete currentState;
         delete gameMap;
         delete gameDeck;
@@ -69,6 +125,9 @@ GameEngine& GameEngine::operator=(const GameEngine& ge) {
         }
         inTournament = ge.inTournament;
         tournamentResults = ge.tournamentResults;
+        tournamentReportForLog = ge.tournamentReportForLog
+            ? new std::string(*ge.tournamentReportForLog)
+            : nullptr;
     }
     return *this;
 }
@@ -336,6 +395,9 @@ void GameEngine::transition(const std::string& newState) {
 }
 
 std::string GameEngine::stringToLog() {
+    if (tournamentReportForLog != nullptr && !tournamentReportForLog->empty()) {
+        return *tournamentReportForLog;
+    }
     return "GameEngine new state: " + *currentState;
 }
 
@@ -410,6 +472,92 @@ void GameEngine::reinforcementPhase() {
     transition("issue orders");
 }
 
+void GameEngine::issueOrdersPhaseTournament() {
+    std::cout << "\n========================================\n";
+    std::cout << "     ISSUING ORDERS PHASE (strategies)\n";
+    std::cout << "========================================\n";
+
+    if (players->empty()) {
+        std::cout << "No players in the game.\n";
+        transition("execute orders");
+        return;
+    }
+
+    std::vector<bool> done(players->size(), false);
+    int playersDone = 0;
+    int safetyIterations = 0;
+    const int maxIterations = 50000;
+
+    while (playersDone < static_cast<int>(players->size()) && safetyIterations < maxIterations) {
+        safetyIterations++;
+        bool anyProgressThisRound = false;
+
+        for (size_t i = 0; i < players->size(); i++) {
+            if (done[i]) {
+                continue;
+            }
+
+            Player* currentPlayer = (*players)[i];
+
+            if (currentPlayer == nullptr) {
+                done[i] = true;
+                playersDone++;
+                continue;
+            }
+
+            if (currentPlayer->getTerritories()->empty()) {
+                done[i] = true;
+                playersDone++;
+                continue;
+            }
+
+            PlayerStrategy* strat = currentPlayer->getStrategy();
+            if (strat == nullptr) {
+                done[i] = true;
+                playersDone++;
+                continue;
+            }
+
+            strat->setDeck(gameDeck);
+            strat->setAllPlayers(players);
+
+            int ordersBefore = static_cast<int>(currentPlayer->getOrdersList()->size());
+            int reinfBefore = currentPlayer->getReinforcementPool();
+            size_t terrCountBefore = currentPlayer->getTerritories()->size();
+
+            currentPlayer->issueOrder();
+
+            int ordersAfter = static_cast<int>(currentPlayer->getOrdersList()->size());
+            int reinfAfter = currentPlayer->getReinforcementPool();
+            size_t terrCountAfter = currentPlayer->getTerritories()->size();
+
+            const bool progressed = (ordersAfter > ordersBefore)
+                || (reinfAfter != reinfBefore)
+                || (terrCountAfter != terrCountBefore);
+
+            if (progressed) {
+                anyProgressThisRound = true;
+                continue;
+            }
+
+            done[i] = true;
+            playersDone++;
+        }
+
+        if (!anyProgressThisRound && playersDone < static_cast<int>(players->size())) {
+            for (size_t i = 0; i < players->size(); i++) {
+                if (!done[i]) {
+                    done[i] = true;
+                    playersDone++;
+                }
+            }
+            break;
+        }
+    }
+
+    transition("execute orders");
+}
+
     void GameEngine::issueOrdersPhase() {
 
         std::cout << "\n========================================\n";
@@ -418,6 +566,11 @@ void GameEngine::reinforcementPhase() {
 
         if (players->empty()) {
             std::cout << "No players in the game.\n";
+            return;
+        }
+
+        if (inTournament) {
+            issueOrdersPhaseTournament();
             return;
         }
 
@@ -1039,8 +1192,16 @@ void GameEngine::tournamentMode(const TournamentParams& params) {
     std::cout << "         TOURNAMENT COMPLETE\n";
     std::cout << "========================================\n";
 
-    // update state
     *currentState = "tournament";
+
+    const std::string reportText = formatTournamentReportForLog(params, tournamentResults);
+    std::cout << "\n" << reportText << "\n";
+
+    delete tournamentReportForLog;
+    tournamentReportForLog = new std::string(reportText);
+    notify(this);
+    delete tournamentReportForLog;
+    tournamentReportForLog = nullptr;
 }
 
 const std::vector<std::vector<std::string>>& GameEngine::getTournamentResults() const {
