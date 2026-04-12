@@ -30,6 +30,9 @@ void testPlayerStrategies() {
     Territory* t4 = new Territory(4, "Delta",   2,  nullptr, continent2);
     Territory* t5 = new Territory(5, "Epsilon", 10, nullptr, continent2);
     Territory* t6 = new Territory(6, "Zeta",    4,  nullptr, continent2);
+    Territory* t7 = new Territory(7, "Eta",     7,  nullptr, continent1);
+    Territory* t8 = new Territory(8, "Theta",   8,  nullptr, continent1);
+    Territory* t9 = new Territory(9, "Iota",    10,  nullptr, continent2);
 
     // Adjacencies
     t1->addAdjacent(t2); t2->addAdjacent(t1);
@@ -38,19 +41,29 @@ void testPlayerStrategies() {
     t4->addAdjacent(t5); t5->addAdjacent(t4);
     t5->addAdjacent(t6); t6->addAdjacent(t5);
     t1->addAdjacent(t6); t6->addAdjacent(t1);
+    t7->addAdjacent(t1); t1->addAdjacent(t7);
+    t7->addAdjacent(t8); t8->addAdjacent(t7);
+    t8->addAdjacent(t3); t3->addAdjacent(t8);
+    t9->addAdjacent(t5); t5->addAdjacent(t9);
+    t9->addAdjacent(t6); t6->addAdjacent(t9);
 
     continent1->addTerritory(t1);
     continent1->addTerritory(t2);
     continent1->addTerritory(t3);
+    continent1->addTerritory(t7);
+    continent1->addTerritory(t8);
+    
     continent2->addTerritory(t4);
     continent2->addTerritory(t5);
     continent2->addTerritory(t6);
+    continent2->addTerritory(t9);
 
     // --- Create players ---
-    int id1 = 1, id2 = 2, id3 = 3;
+    int id1 = 1, id2 = 2, id3 = 3, id4 = 4;
     Player* neutralPlayer  = new Player(nullptr, nullptr, nullptr, &id1);
     Player* cheaterPlayer  = new Player(nullptr, nullptr, nullptr, &id2);
     Player* aggressivePlayer = new Player(nullptr, nullptr, nullptr, &id3);
+    Player* humanPlayer = new Player(nullptr, nullptr, nullptr, &id4);
 
     // Assign territories
     t1->setPlayer(neutralPlayer);
@@ -67,6 +80,13 @@ void testPlayerStrategies() {
     t6->setPlayer(aggressivePlayer);
     aggressivePlayer->getTerritories()->push_back(t5);
     aggressivePlayer->getTerritories()->push_back(t6);
+    
+    t7->setPlayer(humanPlayer);
+    t8->setPlayer(humanPlayer);
+    t9->setPlayer(humanPlayer);
+    humanPlayer->getTerritories()->push_back(t7);
+    humanPlayer->getTerritories()->push_back(t8);
+    humanPlayer->getTerritories()->push_back(t9);
 
     // ============================================================
     // DEMO 1: Assign different strategies to different players
@@ -77,22 +97,48 @@ void testPlayerStrategies() {
     PlayerStrategy* neutralStrategy  = new NeutralPlayerStrategy(neutralPlayer);
     PlayerStrategy* cheaterStrategy  = new CheaterPlayerStrategy(cheaterPlayer);
     PlayerStrategy* aggressiveStrat  = new AggressivePlayerStrategy(aggressivePlayer);
+    PlayerStrategy* humanStrategy  = new HumanPlayerStrategy(humanPlayer);
 
     neutralPlayer->setStrategy(neutralStrategy);
     cheaterPlayer->setStrategy(cheaterStrategy);
     aggressivePlayer->setStrategy(aggressiveStrat);
+    humanPlayer->setStrategy(humanStrategy);
 
     cout << "Player " << neutralPlayer->getId()  << " strategy: "
          << neutralPlayer->getStrategy()->getStrategyName() << "\n";
     cout << "Player " << cheaterPlayer->getId()   << " strategy: "
          << cheaterPlayer->getStrategy()->getStrategyName() << "\n";
     cout << "Player " << aggressivePlayer->getId() << " strategy: "
-         << aggressivePlayer->getStrategy()->getStrategyName() << "\n\n";
+         << aggressivePlayer->getStrategy()->getStrategyName() << "\n";
+    cout << "Player " << humanPlayer->getId() << " strategy: "
+        << humanPlayer->getStrategy()->getStrategyName() << "\n\n";
 
     // ============================================================
-    // DEMO 2: Neutral player issues no orders
+    // DEMO 2: Human Player issues orders
     // ============================================================
-    cout << "--- DEMO 2: Neutral player issues no orders ---\n\n";
+    
+    cout << "--- DEMO 2: Human Player issues their orders ---\n\n";
+    
+    std::vector<Player*>* allPlayers = new vector<Player*>();
+    allPlayers->push_back(humanPlayer);
+    allPlayers->push_back(aggressivePlayer);
+    allPlayers->push_back(neutralPlayer);
+    allPlayers->push_back(cheaterPlayer);
+    
+    Deck* deck = new Deck(20);
+    Hand* hand = new Hand(5, deck);
+    humanPlayer->setHand(hand);
+    humanPlayer->setReinforcementPool(10); //Just for demo purposes
+    
+    humanStrategy->setAllPlayers(allPlayers);
+    humanStrategy->setDeck(deck);
+    
+    humanStrategy->issueOrder();
+         
+    // ============================================================
+    // DEMO 3: Neutral player issues no orders
+    // ============================================================
+    cout << "--- DEMO 3: Neutral player issues no orders ---\n\n";
 
     cout << "Neutral player toAttack() returns: "
          << neutralPlayer->toAttack().size() << " territories (should be 0)\n";
@@ -105,9 +151,9 @@ void testPlayerStrategies() {
          << neutralPlayer->getOrdersList()->size() << " (should be 0)\n\n";
 
     // ============================================================
-    // DEMO 3: Cheater player conquers all adjacent territories
+    // DEMO 4: Cheater player conquers all adjacent territories
     // ============================================================
-    cout << "--- DEMO 3: Cheater conquers adjacent territories ---\n\n";
+    cout << "--- DEMO 4: Cheater conquers adjacent territories ---\n\n";
 
     cout << "Before cheater's turn:\n";
     cout << "  Cheater (Player " << cheaterPlayer->getId()
@@ -159,9 +205,9 @@ void testPlayerStrategies() {
     cout << "\n\n";
 
     // ============================================================
-    // DEMO 4: Dynamic strategy change (Neutral → Aggressive on attack)
+    // DEMO 5: Dynamic strategy change (Neutral → Aggressive on attack)
     // ============================================================
-    cout << "--- DEMO 4: Dynamic strategy change ---\n\n";
+    cout << "--- DEMO 5: Dynamic strategy change ---\n\n";
 
     // Reset scenario for this demo: give neutral player back a territory
     // Simulate: neutral player still has t1, and gets attacked
@@ -186,9 +232,9 @@ void testPlayerStrategies() {
     cout << "\n";
 
     // ============================================================
-    // DEMO 5: Strategy can be switched to any other strategy
+    // DEMO 6: Strategy can be switched to any other strategy
     // ============================================================
-    cout << "--- DEMO 5: Switching strategy at runtime ---\n\n";
+    cout << "--- DEMO 6: Switching strategy at runtime ---\n\n";
 
     cout << "Player " << cheaterPlayer->getId() << " is currently: "
          << cheaterPlayer->getStrategy()->getStrategyName() << "\n";
@@ -220,6 +266,8 @@ void testPlayerStrategies() {
     delete t6;
     delete continent1;
     delete continent2;
+    delete allPlayers;
+    delete deck;
 }
 
 int main() {
