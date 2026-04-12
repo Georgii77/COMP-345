@@ -134,11 +134,56 @@ void testPlayerStrategies() {
     humanStrategy->setDeck(deck);
     
     humanStrategy->issueOrder();
-         
+
+     // ============================================================
+     // DEMO 3: Aggressive player deploys to strongest, attacks enemies
+     // ============================================================
+     cout << "--- DEMO 3: Aggressive player issues orders ---\n\n";
+
+     // Give each territory an army size so there is a clear strongest territory
+     t5->setArmySize(10);
+     t6->setArmySize(3);
+
+     cout << "Aggressive player's territories before issueOrder():\n";
+     for (Territory* t : *aggressivePlayer->getTerritories()) {
+     cout << "  " << t->getName() << " [armies: " << t->getArmySize() << "]\n";
+     }
+
+     cout << "\nAggressive toDefend() (sorted strongest-first):\n";
+     for (Territory* t : aggressivePlayer->toDefend()) {
+     cout << "  " << t->getName() << " [armies: " << t->getArmySize() << "]\n";
+     }
+
+     cout << "\nAggressive toAttack() (enemies adjacent to strongest territory):\n";
+     vector<Territory*> aggAttack = aggressivePlayer->toAttack();
+     if (aggAttack.empty()) {
+     cout << "  (none)\n";
+     } else {
+     for (Territory* t : aggAttack) {
+          cout << "  " << t->getName()
+               << " [armies: " << t->getArmySize() << "]"
+               << " owned by Player " << t->getPlayer()->getId() << "\n";
+     }
+     }
+
+     // Phase 1: deploy reinforcements to strongest territory
+     cout << "\nPhase 1 - Deploy (reinforcement pool = 8):\n";
+     aggressivePlayer->setReinforcementPool(8);
+     aggressivePlayer->getStrategy()->issueOrder();
+     cout << "Orders issued: " << aggressivePlayer->getOrdersList()->size() << "\n";
+     cout << "  Reinforcement pool after deploy: "
+          << aggressivePlayer->getReinforcementPool() << " (should be 0)\n";
+
+     // Phase 2: advance from strongest to enemy (pool already 0)
+     cout << "\nPhase 2 - Advance to enemy territory:\n";
+     aggressivePlayer->getStrategy()->issueOrder();
+     cout << "Orders issued: " << aggressivePlayer->getOrdersList()->size()
+          << " (should be 2 total)\n\n";
+          
     // ============================================================
-    // DEMO 3: Neutral player issues no orders
+    // DEMO 4: Neutral player issues no orders
     // ============================================================
-    cout << "--- DEMO 3: Neutral player issues no orders ---\n\n";
+    cout << "--- DEMO 4: Neutral player issues no orders ---\n\n";
 
     cout << "Neutral player toAttack() returns: "
          << neutralPlayer->toAttack().size() << " territories (should be 0)\n";
@@ -151,9 +196,9 @@ void testPlayerStrategies() {
          << neutralPlayer->getOrdersList()->size() << " (should be 0)\n\n";
 
     // ============================================================
-    // DEMO 4: Cheater player conquers all adjacent territories
+    // DEMO 5: Cheater player conquers all adjacent territories
     // ============================================================
-    cout << "--- DEMO 4: Cheater conquers adjacent territories ---\n\n";
+    cout << "--- DEMO 5: Cheater conquers adjacent territories ---\n\n";
 
     cout << "Before cheater's turn:\n";
     cout << "  Cheater (Player " << cheaterPlayer->getId()
@@ -205,9 +250,62 @@ void testPlayerStrategies() {
     cout << "\n\n";
 
     // ============================================================
-    // DEMO 5: Dynamic strategy change (Neutral → Aggressive on attack)
+     // DEMO 6: Benevolent player deploys to weakest, never attacks
+     // ============================================================
+     cout << "--- DEMO 6: Benevolent player issues orders ---\n\n";
+
+     // Create a fresh benevolent player with two territories of unequal strength
+     int id5 = 5;
+     Player* benevolentPlayer = new Player(nullptr, nullptr, nullptr, &id5);
+     PlayerStrategy* benevolentStrat = new BenevolentPlayerStrategy(benevolentPlayer);
+     benevolentPlayer->setStrategy(benevolentStrat);
+
+     // Reuse t7/t8 — reset ownership for this demo
+     Territory* bTerrA = new Territory(10, "WeakLand",   2, nullptr, continent1);
+     Territory* bTerrB = new Territory(11, "StrongLand", 9, nullptr, continent1);
+     bTerrA->setPlayer(benevolentPlayer);
+     bTerrB->setPlayer(benevolentPlayer);
+     bTerrA->addAdjacent(bTerrB);
+     bTerrB->addAdjacent(bTerrA);
+     benevolentPlayer->getTerritories()->push_back(bTerrA);
+     benevolentPlayer->getTerritories()->push_back(bTerrB);
+
+     cout << "Benevolent player's territories before issueOrder():\n";
+     for (Territory* t : *benevolentPlayer->getTerritories()) {
+     cout << "  " << t->getName() << " [armies: " << t->getArmySize() << "]\n";
+     }
+
+     cout << "\nBenevolent toAttack() (should be empty): "
+          << benevolentPlayer->toAttack().size() << " territories\n";
+
+     cout << "\nBenevolent toDefend() (sorted weakest-first):\n";
+     for (Territory* t : benevolentPlayer->toDefend()) {
+     cout << "  " << t->getName() << " [armies: " << t->getArmySize() << "]\n";
+     }
+
+     // Phase 1: deploy reinforcements to weakest territory
+     cout << "\nPhase 1 - Deploy (reinforcement pool = 6):\n";
+     benevolentPlayer->setReinforcementPool(6);
+     benevolentPlayer->getStrategy()->issueOrder();
+     cout << "Orders issued: " << benevolentPlayer->getOrdersList()->size() << "\n";
+     cout << "  Reinforcement pool after deploy: "
+          << benevolentPlayer->getReinforcementPool() << " (should be 0)\n";
+
+     // Phase 2: advance armies from StrongLand toward WeakLand (pool = 0)
+     cout << "\nPhase 2 - Advance armies toward weakest territory:\n";
+     benevolentPlayer->getStrategy()->issueOrder();
+     cout << "Orders issued: " << benevolentPlayer->getOrdersList()->size()
+          << " (should be 2 total)\n\n";
+
+     // Cleanup for this demo's extra objects
+     delete benevolentPlayer;   // strategy deleted inside Player destructor
+     delete bTerrA;
+     delete bTerrB;
+
     // ============================================================
-    cout << "--- DEMO 5: Dynamic strategy change ---\n\n";
+    // DEMO 7: Dynamic strategy change (Neutral → Aggressive on attack)
+    // ============================================================
+    cout << "--- DEMO 7: Dynamic strategy change ---\n\n";
 
     // Reset scenario for this demo: give neutral player back a territory
     // Simulate: neutral player still has t1, and gets attacked
@@ -232,9 +330,9 @@ void testPlayerStrategies() {
     cout << "\n";
 
     // ============================================================
-    // DEMO 6: Strategy can be switched to any other strategy
+    // DEMO 8: Strategy can be switched to any other strategy
     // ============================================================
-    cout << "--- DEMO 6: Switching strategy at runtime ---\n\n";
+    cout << "--- DEMO 8: Switching strategy at runtime ---\n\n";
 
     cout << "Player " << cheaterPlayer->getId() << " is currently: "
          << cheaterPlayer->getStrategy()->getStrategyName() << "\n";

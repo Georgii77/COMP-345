@@ -30,7 +30,7 @@ void PlayerStrategy::setAllPlayers(std::vector<Player*>* allplayers) {
 }
 
 std::ostream& operator<<(std::ostream& os, const PlayerStrategy& obj) {
-    os << "PlayerStrategy for player: " << (obj.player ? obj.player->getName() : "None");
+    os << "PlayerStrategy for player ID: " << (obj.player ? obj.player->getId() : 0);
     return os;
 }
 
@@ -493,7 +493,7 @@ void AggressivePlayerStrategy::issueOrder() {
 }
 
 std::ostream& operator<<(std::ostream& out, const AggressivePlayerStrategy& strategy) {
-    out << "AggressivePlayerStrategy";
+    out << "AggressivePlayerStrategy for player ID: " << (strategy.player ? strategy.player->getId() : 0);
     return out;
 }
 
@@ -597,7 +597,7 @@ void BenevolentPlayerStrategy::issueOrder() {
 }
 
 std::ostream& operator<<(std::ostream& out, const BenevolentPlayerStrategy& strategy) {
-    out << "BenevolentPlayerStrategy";
+    out << "BenevolentPlayerStrategy for player ID: " << (strategy.player ? strategy.player->getId() : 0);
     return out;
 }
 
