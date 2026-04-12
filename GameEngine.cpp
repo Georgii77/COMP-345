@@ -3,22 +3,28 @@
 //
 
 #include "GameEngine.h"
+#include "CommandProcessing.h"
 #include "Map.h"
 #include "Player.h"
 #include "Orders.h"
 #include "Cards.h"
+#include "PlayerStrategies.h"
 #include <random>
 #include <algorithm>
+// treat string like input stream
+#include <sstream>
 
-//constructor
+
 GameEngine::GameEngine() {
     currentState = new std::string("start");
     gameMap = nullptr;
     players = new std::vector<Player*>();
-    gameDeck = new Deck(50); //create deck with 50 cards (10 of each type)
+    gameDeck = new Deck(50); 
+    // inTournament is auto-set to false
+    inTournament = false;
 }
 
-//destructor
+//deconstructor
 GameEngine::~GameEngine() {
     delete currentState;
     delete gameMap;
@@ -39,6 +45,8 @@ GameEngine::GameEngine(const GameEngine& ge) {
     for (Player* p : *ge.players) {
         players->push_back(new Player(*p));
     }
+    inTournament = ge.inTournament;
+    tournamentResults = ge.tournamentResults;
 }
 
 //assignment operator
@@ -59,6 +67,8 @@ GameEngine& GameEngine::operator=(const GameEngine& ge) {
         for (Player* p : *ge.players) {
             players->push_back(new Player(*p));
         }
+        inTournament = ge.inTournament;
+        tournamentResults = ge.tournamentResults;
     }
     return *this;
 }
@@ -74,12 +84,17 @@ std::string GameEngine::getCurrentState() const {
     return *currentState;
 }
 
-//process command
 void GameEngine::processCommand(const std::string& command) {
-    if (isValidTransition(command)) {
+    // string --> stream
+    std::istringstream iss(command);
+    std::string commandName;
+    // read the first word
+    iss >> commandName;
+
+    if (isValidTransition(commandName)) {
         executeCommand(command);
     } else {
-        std::cout << "Invalid command '" << command
+        std::cout << "Invalid command '" << commandName
                   << "' for state '" << *currentState << "'\n";
     }
 }
@@ -87,7 +102,7 @@ void GameEngine::processCommand(const std::string& command) {
 //check if transition is valid
 bool GameEngine::isValidTransition(const std::string& command) const {
     if (*currentState == "start") {
-        return command == "loadmap";
+        return command == "loadmap" || command == "tournament";
     }
     else if (*currentState == "map loaded") {
         return command == "loadmap" || command == "validatemap";
@@ -115,7 +130,23 @@ bool GameEngine::isValidTransition(const std::string& command) const {
 
 //execute the command
 void GameEngine::executeCommand(const std::string& command) {
-    if (command == "loadmap") {
+    // string --> stream
+    std::istringstream iss(command);
+    std::string commandName;
+    // extract first word
+    iss >> commandName;
+
+    if (commandName == "tournament") {
+        TournamentParams params;
+        if (CommandProcessor::parseTournamentCommand(command, params)) {
+            tournamentMode(params);
+        } else {
+            std::cout << "Usage: tournament -M <map1,...> -P <strat1,...> -G <1-5> -D <10-50>\n";
+        }
+        return;
+    }
+
+    else if (commandName == "loadmap") {
         std::cout << "Enter map filename: ";
         std::string filename;
         std::cin >> filename;
@@ -133,7 +164,7 @@ void GameEngine::executeCommand(const std::string& command) {
             std::cout << "Staying in current state.\n";
         }
     }
-    else if (command == "validatemap") {
+    else if (commandName == "validatemap") {
         std::cout << "Validating map...\n";
         if (gameMap != nullptr && gameMap->validate()) {
             std::cout << "Map is valid!\n";
@@ -143,7 +174,7 @@ void GameEngine::executeCommand(const std::string& command) {
             std::cout << "Staying in current state.\n";
         }
     }
-    else if (command == "addplayer") {
+    else if (commandName == "addplayer") {
         // Check maximum players (2.2.3: 2-6 players allowed)
         if (players->size() >= 6) {
             std::cout << "Maximum of 6 players already added!\n";
@@ -165,7 +196,7 @@ void GameEngine::executeCommand(const std::string& command) {
                   << ") added. Total players: " << players->size() << "\n";
         transition("players added");
     }
-    else if (command == "gamestart") {
+    else if (commandName == "gamestart") {
         // Validate 2-6 players (2.2.3)
         if (players->size() < 2) {
             std::cout << "Need at least 2 players to start the game!\n";
@@ -223,7 +254,7 @@ void GameEngine::executeCommand(const std::string& command) {
         std::cout << "===== GAME READY =====\n\n";
         transition("assignreinforcement");
     }
-    else if (command == "issueorder") {
+    else if (commandName == "issueorder") {
         std::cout << "Which player (0-" << players->size()-1 << ")? ";
         int playerIdx;
         std::cin >> playerIdx;
@@ -246,12 +277,12 @@ void GameEngine::executeCommand(const std::string& command) {
 
         transition("issue orders");
     }
-    else if (command == "endissueorders") {
+    else if (commandName == "endissueorders") {
         std::cout << "All players finished issuing orders.\n";
         std::cout << "Moving to execution phase...\n";
         transition("execute orders");
     }
-    else if (command == "execorder")
+    else if (commandName == "execorder")
     {
         std::cout << "Executing orders from all players...\n";
 
@@ -271,16 +302,16 @@ void GameEngine::executeCommand(const std::string& command) {
             std::cout << *orders; // ← Dereference the pointer!
         }
     }
-    else if (command == "endexecorders") {
+    else if (commandName == "endexecorders") {
         std::cout << "All orders executed.\n";
         std::cout << "Starting new turn...\n";
         transition("assign reinforcement");
     }
-    else if (command == "win") {
+    else if (commandName == "win") {
         std::cout << "A player has won the game!\n";
         transition("win");
     }
-    else if (command == "play") {
+    else if (commandName == "play") {
         std::cout << "Starting a new game...\n";
         //clean up previous game
         delete gameMap;
@@ -291,7 +322,7 @@ void GameEngine::executeCommand(const std::string& command) {
         players->clear();
         transition("start");
     }
-    else if (command == "end") {
+    else if (commandName == "end") {
         std::cout << "Ending game. Goodbye!\n";
         exit(0);
     }
@@ -420,52 +451,45 @@ void GameEngine::reinforcementPhase() {
                     std::vector<Territory*> defendList = currentPlayer->toDefend();
 
                     if (!defendList.empty()) {
-                        std::cout << "Choose territory to deploy to:\n";
+                        // In tournament mode all players have strategies — no user input needed.
+                        // Default: deploy all armies to the first territory in the defend list.
+                        int territoryChoice = 0;
+                        int armiesToDeploy  = currentPlayer->getReinforcementPool();
 
-                        for (size_t t = 0; t < defendList.size(); t++) {
-                            std::cout << t << ": " << defendList[t]->getName() << "\n";
-                        }
+                        if (!inTournament) {
+                            std::cout << "Choose territory to deploy to:\n";
+                            for (size_t t = 0; t < defendList.size(); t++) {
+                                std::cout << t << ": " << defendList[t]->getName() << "\n";
+                            }
+                            std::cin >> territoryChoice;
+                            if (territoryChoice < 0 || territoryChoice >= (int)defendList.size()) {
+                                territoryChoice = 0;
+                            }
 
-                        int territoryChoice;
-                        std::cin >> territoryChoice;
-
-                        if (territoryChoice < 0 || territoryChoice >= defendList.size()) {
-                            territoryChoice = 0;
+                            Territory* chosenTarget = defendList[territoryChoice];
+                            std::cout << "Player " << currentPlayer->getId()
+                                << " reinforcement pool: "
+                                << currentPlayer->getReinforcementPool() << "\n";
+                            std::cout << "How many armies do you want to deploy to "
+                                << chosenTarget->getName() << "? ";
+                            std::cin >> armiesToDeploy;
+                            if (armiesToDeploy <= 0) {
+                                armiesToDeploy = 1;
+                            }
+                            if (armiesToDeploy > currentPlayer->getReinforcementPool()) {
+                                armiesToDeploy = currentPlayer->getReinforcementPool();
+                            }
                         }
 
                         Territory* target = defendList[territoryChoice];
-
-                        std::cout << "Player " << currentPlayer->getId()
-                            << " reinforcement pool: "
-                            << currentPlayer->getReinforcementPool() << "\n";
-
-                        std::cout << "How many armies do you want to deploy to "
-                            << target->getName() << "? ";
-
-                        int armiesToDeploy;
-                        std::cin >> armiesToDeploy;
-
-                        // validate input
-                        if (armiesToDeploy <= 0) {
-                            armiesToDeploy = 1;
-                        }
-
-                        if (armiesToDeploy > currentPlayer->getReinforcementPool()) {
-                            armiesToDeploy = currentPlayer->getReinforcementPool();
-                        }
-
                         Order* deployOrder = new Deploy(currentPlayer, armiesToDeploy, target);
                         currentPlayer->issueOrder(deployOrder);
-
-                        currentPlayer->setReinforcementPool(currentPlayer->getReinforcementPool() - armiesToDeploy);
+                        currentPlayer->setReinforcementPool(
+                            currentPlayer->getReinforcementPool() - armiesToDeploy);
 
                         std::cout << "Player ID " << currentPlayer->getId()
                             << " issued a Deploy order of " << armiesToDeploy
                             << " armies to " << target->getName() << "\n";
-                    }
-
-                    if (currentPlayer->getReinforcementPool() == 0) {
-                        
                     }
                 }
                 else {
@@ -873,4 +897,152 @@ bool GameEngine::playerControlsContinent(Player* player, Continent* continent) c
     }
 
     return true;
+}
+
+
+// instantiate a strategy by name
+static PlayerStrategy* createStrategy(const std::string& name) {
+    if (name == "Aggressive") return new AggressivePlayerStrategy();
+    if (name == "Benevolent") return new BenevolentPlayerStrategy();
+    if (name == "Neutral")    return new NeutralPlayerStrategy();
+    if (name == "Cheater")    return new CheaterPlayerStrategy();
+    if (name == "Human")      return new HumanPlayerStrategy();
+    std::cout << "[Warning] Unknown strategy '" << name << "'. Player will use default behavior.\n";
+    return nullptr;
+}
+
+
+void GameEngine::tournamentMode(const TournamentParams& params) {
+    inTournament = true;
+
+    // allocate results table (rows = maps, cols = games)
+    tournamentResults.assign(
+        params.maps.size(),
+        std::vector<std::string>(params.numGames, ""));
+
+    std::cout << "\n========================================\n";
+    std::cout << "           TOURNAMENT MODE\n";
+    std::cout << "  Maps:      " << params.maps.size() << "\n";
+    std::cout << "  Players:   " << params.strategies.size() << "\n";
+    std::cout << "  Games/map: " << params.numGames << "\n";
+    std::cout << "  Max turns: " << params.maxTurns << "\n";
+    std::cout << "========================================\n";
+
+    // loop over every map
+    for (size_t m = 0; m < params.maps.size(); m++) {
+        const std::string& mapFile = params.maps[m];
+        std::cout << "\n=== Map " << (m + 1) << "/" << params.maps.size()
+                  << ": " << mapFile << " ===\n";
+
+        // play G games on this map
+        for (int g = 0; g < params.numGames; g++) {
+            std::cout << "\n  -- Game " << (g + 1) << "/" << params.numGames << " --\n";
+
+            // reset all game state before each game
+            delete gameMap;
+            gameMap = nullptr;
+            for (Player* p : *players) delete p;
+            players->clear();
+            delete gameDeck;
+            gameDeck = new Deck(50);
+            *currentState = "start";
+
+            // load and validate the map
+            MapLoader loader;
+            gameMap = loader.loadMap(mapFile);
+            if (gameMap == nullptr) {
+                std::cout << "  [Error] Could not load map: " << mapFile << "\n";
+                tournamentResults[m][g] = "Invalid Map";
+                continue;
+            }
+            if (!gameMap->validate()) {
+                std::cout << "  [Error] Map failed validation: " << mapFile << "\n";
+                tournamentResults[m][g] = "Invalid Map";
+                continue;
+            }
+
+            // create one player per strategy (ID = strategy index + 1)
+            for (size_t s = 0; s < params.strategies.size(); s++) {
+                int pid = (int)(s + 1);
+                Player* p = new Player(nullptr, nullptr, nullptr, &pid);
+                PlayerStrategy* strat = createStrategy(params.strategies[s]);
+                if (strat != nullptr) {
+                    strat->setPlayer(p);
+                    p->setStrategy(strat);
+                }
+                players->push_back(p);
+            }
+
+            // distribute territories 
+            const std::vector<Territory*>& territories = gameMap->getTerritories();
+            for (size_t t = 0; t < territories.size(); t++) {
+                Player* owner = (*players)[t % players->size()];
+                territories[t]->setPlayer(owner);
+                owner->getTerritories()->push_back(territories[t]);
+            }
+
+            // randomise play order
+            std::random_device rd;
+            std::mt19937 rng(rd());
+            std::shuffle(players->begin(), players->end(), rng);
+
+            // give each player 50 armies and 2 cards
+            for (Player* p : *players) {
+                p->setReinforcementPool(50);
+                Hand* h = new Hand(2, gameDeck);
+                p->setHand(h);
+            }
+
+            transition("assign reinforcement");
+
+            // run the game loop up to maxTurns; record winner or "Draw"
+            std::string result = "Draw";
+
+            for (int turn = 1; turn <= params.maxTurns; turn++) {
+                removeEliminatedPlayers();
+
+                if (checkWin()) {
+                    Player* winner = getWinner();
+                    if (winner != nullptr) {
+                        int idx = winner->getId() - 1;
+                        if (idx >= 0 && idx < (int)params.strategies.size()) {
+                            result = params.strategies[idx];
+                        }
+                    }
+                    break;
+                }
+
+                reinforcementPhase();
+                issueOrdersPhase();
+                executeOrdersPhase();
+
+                if (*currentState == "win") {
+                    Player* winner = getWinner();
+                    if (winner != nullptr) {
+                        int idx = winner->getId() - 1;
+                        if (idx >= 0 && idx < (int)params.strategies.size()) {
+                            result = params.strategies[idx];
+                        }
+                    }
+                    break;
+                }
+            }
+
+            tournamentResults[m][g] = result;
+            std::cout << "  Game " << (g + 1) << " result: " << result << "\n";
+        }
+    }
+
+    inTournament = false;
+
+    std::cout << "\n========================================\n";
+    std::cout << "         TOURNAMENT COMPLETE\n";
+    std::cout << "========================================\n";
+
+    // update state
+    *currentState = "tournament";
+}
+
+const std::vector<std::vector<std::string>>& GameEngine::getTournamentResults() const {
+    return tournamentResults;
 }

@@ -11,6 +11,16 @@
 #include "Map.h"
 #include "Player.h"
 #include "LoggingObserver.h"
+
+
+
+//Parameters parsed from the tournament command
+struct TournamentParams {
+    std::vector<std::string> maps;
+    std::vector<std::string> strategies;
+    int numGames  = 0;
+    int maxTurns  = 0;
+};
 /**
  * GameEngine class - Controls the flow of the game using state transitions.
  * Manages game states, validates user commands, and orchestrates game components.
@@ -38,6 +48,10 @@ class GameEngine : public Subject, public ILoggable {
         void executeOrdersPhase();
         void mainGameLoop();
 
+        
+        void tournamentMode(const TournamentParams& params);
+        const std::vector<std::vector<std::string>>& getTournamentResults() const;
+
         void removeEliminatedPlayers();
         bool checkWin() const;
         Player* getWinner() const;
@@ -48,7 +62,9 @@ class GameEngine : public Subject, public ILoggable {
 
     private:
         void executeCommand(const std::string& command);
-        
+        bool inTournament;        
+        // [mapIdx][gameIdx] (value is "*strategy of winner*" or "draw")                            
+        std::vector<std::vector<std::string>> tournamentResults; 
 };
 
 

@@ -1,68 +1,99 @@
-#ifndef PLAYER_STRATEGIES_H
-#define PLAYER_STRATEGIES_H
-
+#pragma once
+#include "Cards.h"
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
 
 class Player;
 class Territory;
 class Deck;
 
 class PlayerStrategy {
-    public:
-        PlayerStrategy();
-        PlayerStrategy(Player* player);
-        PlayerStrategy(const PlayerStrategy& other);
-        virtual ~PlayerStrategy();
-        PlayerStrategy& operator=(const PlayerStrategy& other);
+public:
+    virtual ~PlayerStrategy() = default;
+    virtual std::string getStrategyName() const = 0;
+    virtual PlayerStrategy* clone() const = 0;
+    virtual void setPlayer(Player* p);
+    virtual Player* getPlayer() const;
+    void setDeck(Deck* deck);
+    void setAllPlayers(std::vector<Player*>* allplayers);
 
-        void setPlayer(Player* player);
-        Player* getPlayer() const;
+    virtual void issueOrder() = 0;
+    virtual std::vector<Territory*> toDefend() = 0;
+    virtual std::vector<Territory*> toAttack() = 0;
 
-        virtual vector<Territory*> toDefend() = 0;
-        virtual vector<Territory*> toAttack() = 0;
-        virtual void issueOrder(Deck* deck = nullptr) = 0;
+    friend std::ostream& operator<<(std::ostream& os, const PlayerStrategy& obj);
 
-        friend ostream& operator<<(ostream& os, const PlayerStrategy& obj);
+protected:
+    Player* player = nullptr;
+    Deck* deck = nullptr;
+    std::vector<Player*>* allplayers = nullptr;
+};
 
-    protected:
-        Player* player;
+class HumanPlayerStrategy : public PlayerStrategy {
+public:
+    explicit HumanPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override;
+    PlayerStrategy* clone() const override;
+
+    void issueOrder() override;
+    std::vector<Territory*> toAttack() override;
+    std::vector<Territory*> toDefend() override;
 };
 
 class AggressivePlayerStrategy : public PlayerStrategy {
-    public:
-        AggressivePlayerStrategy();
-        AggressivePlayerStrategy(Player* player);
-        AggressivePlayerStrategy(const AggressivePlayerStrategy& other);
-        ~AggressivePlayerStrategy();
-        AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other);
+public:
+    explicit AggressivePlayerStrategy(Player* p = nullptr);
+    AggressivePlayerStrategy(const AggressivePlayerStrategy& other);
+    AggressivePlayerStrategy& operator=(const AggressivePlayerStrategy& other);
 
-        vector<Territory*> toDefend();
-        vector<Territory*> toAttack();
-        void issueOrder(Deck* deck = nullptr);
+    std::string getStrategyName() const override;
+    PlayerStrategy* clone() const override;
 
-        friend ostream& operator<<(ostream& os, const AggressivePlayerStrategy& obj);
-    private:
-        Territory* getStrongestTerritory() const;
+    void issueOrder() override;
+    std::vector<Territory*> toDefend() override;
+    std::vector<Territory*> toAttack() override;
+
+    friend std::ostream& operator<<(std::ostream& out, const AggressivePlayerStrategy& strategy);
+
+private:
+    Territory* getStrongestTerritory() const;
 };
 
 class BenevolentPlayerStrategy : public PlayerStrategy {
-    public:
-        BenevolentPlayerStrategy();
-        BenevolentPlayerStrategy(Player* player);
-        BenevolentPlayerStrategy(const BenevolentPlayerStrategy& other);
-        ~BenevolentPlayerStrategy();
-        BenevolentPlayerStrategy& operator=(const BenevolentPlayerStrategy& other);
+public:
+    explicit BenevolentPlayerStrategy(Player* p = nullptr);
+    BenevolentPlayerStrategy(const BenevolentPlayerStrategy& other);
+    BenevolentPlayerStrategy& operator=(const BenevolentPlayerStrategy& other);
 
-        vector<Territory*> toDefend();
-        vector<Territory*> toAttack();
-        void issueOrder(Deck* deck = nullptr);
+    std::string getStrategyName() const override;
+    PlayerStrategy* clone() const override;
 
-        friend ostream& operator<<(ostream& os, const BenevolentPlayerStrategy& obj);
-    private:
-        Territory* getWeakestTerritory() const;
+    void issueOrder() override;
+    std::vector<Territory*> toDefend() override;
+    std::vector<Territory*> toAttack() override;
+
+    friend std::ostream& operator<<(std::ostream& out, const BenevolentPlayerStrategy& strategy);
 };
 
-#endif
+class NeutralPlayerStrategy : public PlayerStrategy {
+public:
+    explicit NeutralPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override;
+    PlayerStrategy* clone() const override;
+
+    void issueOrder() override;
+    std::vector<Territory*> toAttack() override;
+    std::vector<Territory*> toDefend() override;
+};
+
+class CheaterPlayerStrategy : public PlayerStrategy {
+public:
+    explicit CheaterPlayerStrategy(Player* p = nullptr) { player = p; }
+    std::string getStrategyName() const override;
+    PlayerStrategy* clone() const override;
+
+    void issueOrder() override;
+    std::vector<Territory*> toAttack() override;
+    std::vector<Territory*> toDefend() override;
+};
