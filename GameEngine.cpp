@@ -472,92 +472,6 @@ void GameEngine::reinforcementPhase() {
     transition("issue orders");
 }
 
-void GameEngine::issueOrdersPhaseTournament() {
-    std::cout << "\n========================================\n";
-    std::cout << "     ISSUING ORDERS PHASE (strategies)\n";
-    std::cout << "========================================\n";
-
-    if (players->empty()) {
-        std::cout << "No players in the game.\n";
-        transition("execute orders");
-        return;
-    }
-
-    std::vector<bool> done(players->size(), false);
-    int playersDone = 0;
-    int safetyIterations = 0;
-    const int maxIterations = 50000;
-
-    while (playersDone < static_cast<int>(players->size()) && safetyIterations < maxIterations) {
-        safetyIterations++;
-        bool anyProgressThisRound = false;
-
-        for (size_t i = 0; i < players->size(); i++) {
-            if (done[i]) {
-                continue;
-            }
-
-            Player* currentPlayer = (*players)[i];
-
-            if (currentPlayer == nullptr) {
-                done[i] = true;
-                playersDone++;
-                continue;
-            }
-
-            if (currentPlayer->getTerritories()->empty()) {
-                done[i] = true;
-                playersDone++;
-                continue;
-            }
-
-            PlayerStrategy* strat = currentPlayer->getStrategy();
-            if (strat == nullptr) {
-                done[i] = true;
-                playersDone++;
-                continue;
-            }
-
-            strat->setDeck(gameDeck);
-            strat->setAllPlayers(players);
-
-            int ordersBefore = static_cast<int>(currentPlayer->getOrdersList()->size());
-            int reinfBefore = currentPlayer->getReinforcementPool();
-            size_t terrCountBefore = currentPlayer->getTerritories()->size();
-
-            currentPlayer->issueOrder();
-
-            int ordersAfter = static_cast<int>(currentPlayer->getOrdersList()->size());
-            int reinfAfter = currentPlayer->getReinforcementPool();
-            size_t terrCountAfter = currentPlayer->getTerritories()->size();
-
-            const bool progressed = (ordersAfter > ordersBefore)
-                || (reinfAfter != reinfBefore)
-                || (terrCountAfter != terrCountBefore);
-
-            if (progressed) {
-                anyProgressThisRound = true;
-                continue;
-            }
-
-            done[i] = true;
-            playersDone++;
-        }
-
-        if (!anyProgressThisRound && playersDone < static_cast<int>(players->size())) {
-            for (size_t i = 0; i < players->size(); i++) {
-                if (!done[i]) {
-                    done[i] = true;
-                    playersDone++;
-                }
-            }
-            break;
-        }
-    }
-
-    transition("execute orders");
-}
-
     void GameEngine::issueOrdersPhase() {
 
         std::cout << "\n========================================\n";
@@ -569,8 +483,81 @@ void GameEngine::issueOrdersPhaseTournament() {
             return;
         }
 
+        // Tournament: strategies own deploy/advance/card behaviour via Player::issueOrder().
         if (inTournament) {
-            issueOrdersPhaseTournament();
+            std::vector<bool> doneT(players->size(), false);
+            int playersDoneT = 0;
+            int safetyIterations = 0;
+            const int maxIterations = 50000;
+
+            while (playersDoneT < static_cast<int>(players->size()) && safetyIterations < maxIterations) {
+                safetyIterations++;
+                bool anyProgressThisRound = false;
+
+                for (size_t i = 0; i < players->size(); i++) {
+                    if (doneT[i]) {
+                        continue;
+                    }
+
+                    Player* currentPlayer = (*players)[i];
+
+                    if (currentPlayer == nullptr) {
+                        doneT[i] = true;
+                        playersDoneT++;
+                        continue;
+                    }
+
+                    if (currentPlayer->getTerritories()->empty()) {
+                        doneT[i] = true;
+                        playersDoneT++;
+                        continue;
+                    }
+
+                    PlayerStrategy* strat = currentPlayer->getStrategy();
+                    if (strat == nullptr) {
+                        doneT[i] = true;
+                        playersDoneT++;
+                        continue;
+                    }
+
+                    strat->setDeck(gameDeck);
+                    strat->setAllPlayers(players);
+
+                    int ordersBefore = static_cast<int>(currentPlayer->getOrdersList()->size());
+                    int reinfBefore = currentPlayer->getReinforcementPool();
+                    size_t terrCountBefore = currentPlayer->getTerritories()->size();
+
+                    currentPlayer->issueOrder();
+
+                    int ordersAfter = static_cast<int>(currentPlayer->getOrdersList()->size());
+                    int reinfAfter = currentPlayer->getReinforcementPool();
+                    size_t terrCountAfter = currentPlayer->getTerritories()->size();
+
+                    const bool progressed = (ordersAfter > ordersBefore)
+                        || (reinfAfter != reinfBefore)
+                        || (terrCountAfter != terrCountBefore);
+
+                    if (progressed) {
+                        anyProgressThisRound = true;
+                        continue;
+                    }
+
+                    doneT[i] = true;
+                    playersDoneT++;
+                }
+
+                if (!anyProgressThisRound && playersDoneT < static_cast<int>(players->size())) {
+                    for (size_t i = 0; i < players->size(); i++) {
+                        if (!doneT[i]) {
+                            doneT[i] = true;
+                            playersDoneT++;
+                        }
+                    }
+                    break;
+                }
+            }
+
+            transition("execute orders");
             return;
         }
 

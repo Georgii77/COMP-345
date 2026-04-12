@@ -114,12 +114,10 @@ void testPlayerStrategies() {
         << humanPlayer->getStrategy()->getStrategyName() << "\n\n";
 
     // ============================================================
-    // DEMO 2: Human strategy = user-driven (stdin); computer = automatic
+    // DEMO 2: Human Player issues orders (manual testing via std::cin)
     // ============================================================
-    cout << "--- DEMO 2: Human vs computer strategies ---\n\n";
-    cout << "HumanPlayerStrategy issues orders only through interactive std::cin.\n";
-    cout << "For an unattended demo, Benevolent is shown issuing one order automatically;\n";
-    cout << "Player " << humanPlayer->getId() << " remains assigned Human strategy.\n\n";
+
+    cout << "--- DEMO 2: Human Player issues their orders ---\n\n";
 
     std::vector<Player*>* allPlayers = new vector<Player*>();
     allPlayers->push_back(humanPlayer);
@@ -130,23 +128,13 @@ void testPlayerStrategies() {
     Deck* deck = new Deck(20);
     Hand* hand = new Hand(5, deck);
     humanPlayer->setHand(hand);
-    humanPlayer->setReinforcementPool(10);
+    humanPlayer->setReinforcementPool(10); // demo only
 
     humanStrategy->setAllPlayers(allPlayers);
     humanStrategy->setDeck(deck);
 
-    PlayerStrategy* benevolentForDemo = new BenevolentPlayerStrategy(humanPlayer);
-    benevolentForDemo->setAllPlayers(allPlayers);
-    benevolentForDemo->setDeck(deck);
-    cout << "Temporary switch to Benevolent to demonstrate automated issueOrder():\n";
-    humanPlayer->setStrategy(benevolentForDemo);
-    humanPlayer->getStrategy()->issueOrder();
-    cout << "Restore Human strategy (new instance; setStrategy deletes the old strategy).\n";
-    humanStrategy = new HumanPlayerStrategy(humanPlayer);
-    humanStrategy->setAllPlayers(allPlayers);
-    humanStrategy->setDeck(deck);
-    humanPlayer->setStrategy(humanStrategy);
-         
+    humanStrategy->issueOrder();
+
     // ============================================================
     // DEMO 3: Neutral player issues no orders
     // ============================================================

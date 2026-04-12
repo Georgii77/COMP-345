@@ -67,8 +67,6 @@ class GameEngine : public Subject, public ILoggable {
         std::vector<std::vector<std::string>> tournamentResults;
         // When non-null, stringToLog() returns this text (tournament results for the log file).
         std::string* tournamentReportForLog;
-
-        void issueOrdersPhaseTournament();
 };
 
 
