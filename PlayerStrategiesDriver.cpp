@@ -134,6 +134,7 @@ void testPlayerStrategies() {
     humanStrategy->setDeck(deck);
     
     humanStrategy->issueOrder();
+    humanStrategy->getPlayer()->getOrdersList()->executeOrders();
 
      // ============================================================
      // DEMO 3: Aggressive player deploys to strongest, attacks enemies

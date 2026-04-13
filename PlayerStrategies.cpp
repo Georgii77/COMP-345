@@ -83,8 +83,8 @@ void HumanPlayerStrategy::issueOrder() {
             
             Territory* target = defendList[territoryChoice];
             Order* deployOrder = new Deploy(player, armiesToDeploy, target);
-            player->issueOrder(deployOrder);
-            player->setReinforcementPool(player->getReinforcementPool() - armiesToDeploy);
+            deployOrder->execute();
+            delete deployOrder;
 
             std::cout << "Player ID " << player->getId() << " issued a Deploy order of " << armiesToDeploy << " armies to " << target->getName() << "\n";
             std::cout << "Current army count on " << target->getName() << " is " << target->getArmySize() << ".\n";
