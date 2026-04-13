@@ -146,6 +146,15 @@ void HumanPlayerStrategy::issueOrder() {
         }
     }
 
+    OrdersList* orders = player->getOrdersList();
+    while (!orders->empty()) {
+        Order* order = orders->getOrder(0);
+        if (order != nullptr) {
+            order->execute();
+        }
+        orders->remove(0);
+    }
+
     // Advance orders & Cards
     while (true) {
         std::cout << "\nCurrently owned territories:\n";
