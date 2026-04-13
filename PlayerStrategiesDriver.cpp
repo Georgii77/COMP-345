@@ -135,6 +135,7 @@ void testPlayerStrategies() {
     
     humanStrategy->issueOrder();
     humanStrategy->getPlayer()->getOrdersList()->executeOrders();
+    std::cout << "\nHuman player orders after execution (to show that orders are issued correctly):\n" << *humanStrategy->getPlayer()->getOrdersList() << "\n\n";
 
      // ============================================================
      // DEMO 3: Aggressive player deploys to strongest, attacks enemies
@@ -363,6 +364,9 @@ void testPlayerStrategies() {
     delete t4;
     delete t5;
     delete t6;
+    delete t7;
+    delete t8;
+    delete t9;
     delete continent1;
     delete continent2;
     delete allPlayers;
