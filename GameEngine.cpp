@@ -15,6 +15,55 @@
 #include <sstream>
 
 
+static std::string formatTournamentReportForLog(
+    const TournamentParams& params,
+    const std::vector<std::vector<std::string>>& results)
+{
+    std::ostringstream oss;
+    oss << "Tournament mode:\n";
+    oss << "M: ";
+    for (size_t i = 0; i < params.maps.size(); ++i) {
+        if (i > 0) {
+            oss << ", ";
+        }
+        oss << params.maps[i];
+    }
+    oss << "\nP: ";
+    for (size_t i = 0; i < params.strategies.size(); ++i) {
+        if (i > 0) {
+            oss << ", ";
+        }
+        oss << params.strategies[i];
+    }
+    oss << "\nG: " << params.numGames << "\n";
+    oss << "D: " << params.maxTurns << "\n";
+    oss << "Results:\n";
+    oss << "\t";
+    for (int g = 1; g <= params.numGames; ++g) {
+        oss << "Game " << g;
+        if (g < params.numGames) {
+            oss << "\t";
+        }
+    }
+    oss << "\n";
+    for (size_t m = 0; m < results.size(); ++m) {
+        oss << "Map " << (m + 1);
+        if (m < params.maps.size()) {
+            oss << " (" << params.maps[m] << ")";
+        }
+        oss << "\t";
+        for (size_t g = 0; g < results[m].size(); ++g) {
+            oss << results[m][g];
+            if (g + 1 < results[m].size()) {
+                oss << "\t";
+            }
+        }
+        oss << "\n";
+    }
+    return oss.str();
+}
+
+
 GameEngine::GameEngine() {
     currentState = new std::string("start");
     gameMap = nullptr;
@@ -22,6 +71,7 @@ GameEngine::GameEngine() {
     gameDeck = new Deck(50); 
     // inTournament is auto-set to false
     inTournament = false;
+    tournamentReportForLog = nullptr;
 }
 
 //deconstructor
@@ -33,6 +83,7 @@ GameEngine::~GameEngine() {
     }
     delete players;
     delete gameDeck;
+    delete tournamentReportForLog;
 }
 
 //copy constructor
@@ -47,11 +98,16 @@ GameEngine::GameEngine(const GameEngine& ge) {
     }
     inTournament = ge.inTournament;
     tournamentResults = ge.tournamentResults;
+    tournamentReportForLog = ge.tournamentReportForLog
+        ? new std::string(*ge.tournamentReportForLog)
+        : nullptr;
 }
 
 //assignment operator
 GameEngine& GameEngine::operator=(const GameEngine& ge) {
     if (this != &ge) {
+        delete tournamentReportForLog;
+        tournamentReportForLog = nullptr;
         delete currentState;
         delete gameMap;
         delete gameDeck;
@@ -69,6 +125,9 @@ GameEngine& GameEngine::operator=(const GameEngine& ge) {
         }
         inTournament = ge.inTournament;
         tournamentResults = ge.tournamentResults;
+        tournamentReportForLog = ge.tournamentReportForLog
+            ? new std::string(*ge.tournamentReportForLog)
+            : nullptr;
     }
     return *this;
 }
@@ -248,6 +307,14 @@ void GameEngine::executeCommand(const std::string& command) {
             std::cout << "   Player ID " << p->getId() << " drew 2 cards\n";
         }
         std::cout << "    Each player received a hand with 2 cards\n";
+        
+        // Assign human strategy to all players:
+        for(Player* p : *players){
+            PlayerStrategy* strat = new HumanPlayerStrategy(p);
+            p->setStrategy(strat);
+            strat->setAllPlayers(players);
+            strat->setDeck(gameDeck);
+        }
 
         // 2.2.8: Transition to play phase
         std::cout << "\n5. Starting play phase...\n";
@@ -336,6 +403,9 @@ void GameEngine::transition(const std::string& newState) {
 }
 
 std::string GameEngine::stringToLog() {
+    if (tournamentReportForLog != nullptr && !tournamentReportForLog->empty()) {
+        return *tournamentReportForLog;
+    }
     return "GameEngine new state: " + *currentState;
 }
 
@@ -410,282 +480,23 @@ void GameEngine::reinforcementPhase() {
     transition("issue orders");
 }
 
-    void GameEngine::issueOrdersPhase() {
+void GameEngine::issueOrdersPhase() {
 
-        std::cout << "\n========================================\n";
-        std::cout << "          ISSUING ORDERS PHASE\n";
-        std::cout << "========================================\n";
+    std::cout << "\n========================================\n";
+    std::cout << "          ISSUING ORDERS PHASE\n";
+    std::cout << "========================================\n";
 
-        if (players->empty()) {
-            std::cout << "No players in the game.\n";
-            return;
-        }
+    if (players->empty()) {
+        std::cout << "No players in the game.\n";
+        return;
+    }
 
-        std::vector<bool> done(players->size(), false);
-        int playersDone = 0;
+    for(Player* p : *players){
+        p->issueOrder();
+    }
 
-        while (playersDone < (int)(players->size())) {
-            for (size_t i = 0; i < players->size(); i++) {
-                if (done[i]) {
-                    continue;
-                }
-
-                Player* currentPlayer = (*players)[i];
-
-                if (currentPlayer == nullptr) {
-                    done[i] = true;
-                    playersDone++;
-                    continue;
-                }
-
-                // If player has no territories, skip them
-                if (currentPlayer->getTerritories()->empty()) {
-                    done[i] = true;
-                    playersDone++;
-                    continue;
-                }
-
-                int ordersBefore = (int)(currentPlayer->getOrdersList()->size());
-
-                if (currentPlayer->getReinforcementPool() > 0) {
-                    std::vector<Territory*> defendList = currentPlayer->toDefend();
-
-                    if (!defendList.empty()) {
-                        // In tournament mode all players have strategies — no user input needed.
-                        // Default: deploy all armies to the first territory in the defend list.
-                        int territoryChoice = 0;
-                        int armiesToDeploy  = currentPlayer->getReinforcementPool();
-
-                        if (!inTournament) {
-                            std::cout << "Choose territory to deploy to:\n";
-                            for (size_t t = 0; t < defendList.size(); t++) {
-                                std::cout << t << ": " << defendList[t]->getName() << "\n";
-                            }
-                            std::cin >> territoryChoice;
-                            if (territoryChoice < 0 || territoryChoice >= (int)defendList.size()) {
-                                territoryChoice = 0;
-                            }
-
-                            Territory* chosenTarget = defendList[territoryChoice];
-                            std::cout << "Player " << currentPlayer->getId()
-                                << " reinforcement pool: "
-                                << currentPlayer->getReinforcementPool() << "\n";
-                            std::cout << "How many armies do you want to deploy to "
-                                << chosenTarget->getName() << "? ";
-                            std::cin >> armiesToDeploy;
-                            if (armiesToDeploy <= 0) {
-                                armiesToDeploy = 1;
-                            }
-                            if (armiesToDeploy > currentPlayer->getReinforcementPool()) {
-                                armiesToDeploy = currentPlayer->getReinforcementPool();
-                            }
-                        }
-
-                        Territory* target = defendList[territoryChoice];
-                        Order* deployOrder = new Deploy(currentPlayer, armiesToDeploy, target);
-                        currentPlayer->issueOrder(deployOrder);
-                        currentPlayer->setReinforcementPool(
-                            currentPlayer->getReinforcementPool() - armiesToDeploy);
-
-                        std::cout << "Player ID " << currentPlayer->getId()
-                            << " issued a Deploy order of " << armiesToDeploy
-                            << " armies to " << target->getName() << "\n";
-                    }
-                }
-                else {
-                    // basic demonstration logic for advance / card play
-                    // first try attack
-                    std::vector<Territory*> attackList = currentPlayer->toAttack();
-                    std::vector<Territory*> defendList = currentPlayer->toDefend();
-
-                    bool issuedOrder = false;
-
-                    // try to issue an advance attack order
-                    for (Territory* source : *currentPlayer->getTerritories()) {
-                        if (source == nullptr) {
-                            continue;
-                        }
-
-                        if (source->getArmySize() <= 1) {
-                            continue;
-                        }
-
-                        for (Territory* target : attackList) {
-                            if (target == nullptr) {
-                                continue;
-                            }
-
-                            if (source->isAdjacentTo(target) && target->getPlayer() != currentPlayer) {
-                                int armiesToAdvance = source->getArmySize() - 1;
-
-                                if (armiesToAdvance > 0) {
-                                    Order* advanceOrder = new Advance(currentPlayer, armiesToAdvance, source, target);
-                                    currentPlayer->issueOrder(advanceOrder);
-
-                                    std::cout << "Player ID " << currentPlayer->getId()
-                                        << " issued an Advance order of "
-                                        << armiesToAdvance << " armies from "
-                                        << source->getName() << " to "
-                                        << target->getName() << "\n";
-                                }
-
-                                issuedOrder = true;
-                                break;
-                            }
-                        }
-
-                        if (issuedOrder) {
-                            break;
-                        }
-                    }
-
-                    // if no attack order, try defend order
-                    if (!issuedOrder) {
-                        for (Territory* source : *currentPlayer->getTerritories()) {
-                            if (source == nullptr) {
-                                continue;
-                            }
-
-                            if (source->getArmySize() <= 1) {
-                                continue;
-                            }
-
-                            for (Territory* target : defendList) {
-                                if (target == nullptr || target == source) {
-                                    continue;
-                                }
-
-                                if (source->isAdjacentTo(target) && target->getPlayer() == currentPlayer) {
-                                    int armiesToAdvance = source->getArmySize() - 1;
-
-                                    if (armiesToAdvance > 0) {
-                                        Order* advanceOrder = new Advance(currentPlayer, armiesToAdvance, source, target);
-                                        currentPlayer->issueOrder(advanceOrder);
-
-                                        std::cout << "Player ID " << currentPlayer->getId()
-                                            << " issued an Advance order of "
-                                            << armiesToAdvance << " armies from "
-                                            << source->getName() << " to "
-                                            << target->getName() << "\n";
-                                    }
-
-                                    issuedOrder = true;
-                                    break;
-                                }
-                            }
-
-                            if (issuedOrder) {
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!issuedOrder && currentPlayer->getHand() != nullptr && currentPlayer->getHand()->size() > 0) {
-                        try {
-                            Card card = currentPlayer->getHand()->getCard(0);
-                            std::string cardType = card.getType();
-
-                            if (cardType == "bomb" && !attackList.empty()) {
-                                card.play(0,
-                                    currentPlayer->getOrdersList(),
-                                    currentPlayer->getHand(),
-                                    gameDeck,
-                                    nullptr,
-                                    attackList[0],
-                                    0,
-                                    currentPlayer,
-                                    nullptr);
-
-                                std::cout << "Player ID " << currentPlayer->getId()
-                                    << " played a Bomb card.\n";
-                                issuedOrder = true;
-                            }
-                            else if (cardType == "blockade" && !defendList.empty()) {
-                                card.play(0,
-                                    currentPlayer->getOrdersList(),
-                                    currentPlayer->getHand(),
-                                    gameDeck,
-                                    nullptr,
-                                    defendList[0],
-                                    0,
-                                    currentPlayer,
-                                    nullptr);
-
-                                std::cout << "Player ID " << currentPlayer->getId()
-                                    << " played a Blockade card.\n";
-                                issuedOrder = true;
-                            }
-                            else if (cardType == "airlift" && defendList.size() >= 2) {
-                                card.play(0,
-                                    currentPlayer->getOrdersList(),
-                                    currentPlayer->getHand(),
-                                    gameDeck,
-                                    defendList[0],
-                                    defendList[1],
-                                    1,
-                                    currentPlayer,
-                                    nullptr);
-
-                                std::cout << "Player ID " << currentPlayer->getId()
-                                    << " played an Airlift card.\n";
-                                issuedOrder = true;
-                            }
-                            else if (cardType == "reinforcement" && !defendList.empty()) {
-                                card.play(0,
-                                    currentPlayer->getOrdersList(),
-                                    currentPlayer->getHand(),
-                                    gameDeck,
-                                    nullptr,
-                                    defendList[0],
-                                    5,
-                                    currentPlayer,
-                                    nullptr);
-
-                                std::cout << "Player ID " << currentPlayer->getId()
-                                    << " played a Reinforcement card.\n";
-                                issuedOrder = true;
-                            }
-                            else if (cardType == "diplomacy") {
-                                for (Player* otherPlayer : *players) {
-                                    if (otherPlayer != nullptr && otherPlayer != currentPlayer) {
-                                        card.play(0,
-                                            currentPlayer->getOrdersList(),
-                                            currentPlayer->getHand(),
-                                            gameDeck,
-                                            nullptr,
-                                            nullptr,
-                                            0,
-                                            currentPlayer,
-                                            otherPlayer);
-
-                                        std::cout << "Player ID " << currentPlayer->getId()
-                                            << " played a Diplomacy card.\n";
-                                        issuedOrder = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        catch (...) {
-                            // if card cannot be played with current placeholders, ignore
-                        }
-                    }
-
-                    int ordersAfter = static_cast<int>(currentPlayer->getOrdersList()->size());
-
-                    if (!issuedOrder && ordersAfter == ordersBefore) {
-                        done[i] = true;
-                        playersDone++;
-
-                        std::cout << "Player ID " << currentPlayer->getId()
-                            << " has no more orders to issue.\n";
-                    }
-                }
-            }
-        }
-
-        transition("execute orders");
-    };
+    transition("execute orders");
+}
 
 
 void GameEngine::executeOrdersPhase() {
@@ -969,8 +780,13 @@ void GameEngine::tournamentMode(const TournamentParams& params) {
                 if (strat != nullptr) {
                     strat->setPlayer(p);
                     p->setStrategy(strat);
+                    strat->setDeck(gameDeck);
                 }
                 players->push_back(p);
+            }
+            
+            for (Player* p : *players) {
+                p->getStrategy()->setAllPlayers(players);
             }
 
             // distribute territories 
@@ -1039,8 +855,16 @@ void GameEngine::tournamentMode(const TournamentParams& params) {
     std::cout << "         TOURNAMENT COMPLETE\n";
     std::cout << "========================================\n";
 
-    // update state
     *currentState = "tournament";
+
+    const std::string reportText = formatTournamentReportForLog(params, tournamentResults);
+    std::cout << "\n" << reportText << "\n";
+
+    delete tournamentReportForLog;
+    tournamentReportForLog = new std::string(reportText);
+    notify(this);
+    delete tournamentReportForLog;
+    tournamentReportForLog = nullptr;
 }
 
 const std::vector<std::vector<std::string>>& GameEngine::getTournamentResults() const {

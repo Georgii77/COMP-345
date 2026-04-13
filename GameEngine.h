@@ -62,9 +62,11 @@ class GameEngine : public Subject, public ILoggable {
 
     private:
         void executeCommand(const std::string& command);
-        bool inTournament;        
-        // [mapIdx][gameIdx] (value is "*strategy of winner*" or "draw")                            
-        std::vector<std::vector<std::string>> tournamentResults; 
+        bool inTournament;
+        // [mapIdx][gameIdx] (winner strategy name, "Draw", or "Invalid Map")
+        std::vector<std::vector<std::string>> tournamentResults;
+        // When non-null, stringToLog() returns this text (tournament results for the log file).
+        std::string* tournamentReportForLog;
 };
 
 
