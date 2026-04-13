@@ -126,7 +126,7 @@ void testPlayerStrategies() {
     allPlayers->push_back(cheaterPlayer);
     
     Deck* deck = new Deck(20);
-    Hand* hand = new Hand(5, deck);
+    Hand* hand = new Hand(10, deck); //10 for demo purposes (to see the different types of cards)
     humanPlayer->setHand(hand);
     humanPlayer->setReinforcementPool(10); //Just for demo purposes
     
