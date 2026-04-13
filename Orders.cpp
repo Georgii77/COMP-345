@@ -5,7 +5,10 @@
 #include <ostream>
 #include <string>
 #include <vector>
+
+// ===== A3 CHANGE: Include strategy header for Neutral->Aggressive switch =====
 #include "PlayerStrategies.h"
+// ===== END A3 CHANGE =====
 
 // Order Class Definitions
 // Default Constructor 
@@ -88,8 +91,6 @@ Deploy* Deploy::clone() {
 bool Deploy::validate(){
     if(this->issuingPlayer == nullptr || this->target == nullptr || this->armyCount <= 0) return false;
     
-    if(this->issuingPlayer->getReinforcementPool() < armyCount) return false;
-    
     if(this->issuingPlayer != this->target->getPlayer()) return false;
     
     return true;
@@ -99,7 +100,6 @@ bool Deploy::validate(){
 void Deploy::execute(){
     if(validate()){
         this->target->setArmySize(this->target->getArmySize() + this->armyCount);
-        this->issuingPlayer->setReinforcementPool(this->issuingPlayer->getReinforcementPool() - this->armyCount);
         
         this->executed = true;
         this->effect = std::to_string(this->armyCount) + " armies deployed in " + this->target->getName() + ". Current armies in " + this->target->getName() + " is: " + std::to_string(this->target->getArmySize());
@@ -213,8 +213,10 @@ void Advance::execute(){
                     if(randomNum >= 60)
                         defenderCausalties++;
                 }
-
+                
+                // ===== A3 CHANGE: Save defender pointer BEFORE ownership might change =====
                 Player* defender = this->target->getPlayer();
+                // ===== END A3 CHANGE =====
                 
                 // Defender wins
                 if(this->target->getArmySize() - defenderCausalties > 0){
@@ -226,12 +228,14 @@ void Advance::execute(){
                     std::cout << "Advance Order Executed!" << std::endl;
                     notify(this);
 
+                    // ===== A3 CHANGE: Neutral->Aggressive switch (defender held but was still attacked) =====
                     if (defender->getStrategy() != nullptr &&
                         defender->getStrategy()->getStrategyName() == "Neutral") {
                         std::cout << "Neutral Player " << defender->getId()
                                   << " was attacked! Switching to Aggressive strategy!\n";
                         defender->setStrategy(new AggressivePlayerStrategy(defender));
                     }
+                    // ===== END A3 CHANGE =====
                 }
                 // Attacker wins
                 else {
@@ -254,12 +258,14 @@ void Advance::execute(){
                     std::cout << "Advance Order Executed!" << std::endl;
                     notify(this);
 
+                    // ===== A3 CHANGE: Neutral->Aggressive switch (defender lost territory) =====
                     if (defender->getStrategy() != nullptr &&
                         defender->getStrategy()->getStrategyName() == "Neutral") {
                         std::cout << "Neutral Player " << defender->getId()
                                   << " was attacked! Switching to Aggressive strategy!\n";
                         defender->setStrategy(new AggressivePlayerStrategy(defender));
                     }
+                    // ===== END A3 CHANGE =====
                 }
             }
         }

@@ -78,17 +78,22 @@ std::ostream& operator<<(std::ostream& outs, const Territory& t) {
 	outs << "Territory ID: " << t.id << ", Name: " << t.name << ", Army Size: " << t.armySize;
 	return outs;
 }
-// continent default constructor
-Continent::Continent() : name("") {}
 
-// continent  constructor
-Continent::Continent(const std::string& name) {
-	this->name = name;
-}
+// continent default constructor
+// ===== A3 CHANGE: Initialize bonusValue =====
+Continent::Continent() : name(""), bonusValue(0) {}
+
+// continent constructor (name only, default bonus 0)
+Continent::Continent(const std::string& name) : name(name), bonusValue(0) {}
+
+// continent constructor with bonus value
+Continent::Continent(const std::string& name, int bonusValue) : name(name), bonusValue(bonusValue) {}
+// ===== END A3 CHANGE =====
 
 // continent copy constructor
 Continent::Continent(const Continent& c) {
 	name = c.name;
+	bonusValue = c.bonusValue; // ===== A3 CHANGE =====
 	territories = c.territories;
 }
 
@@ -96,17 +101,21 @@ Continent::Continent(const Continent& c) {
 Continent& Continent::operator=(const Continent& c) {
 	if (this != &c) {
 		name = c.name;
+		bonusValue = c.bonusValue; // ===== A3 CHANGE =====
 		territories = c.territories;
 	}
 	return *this;
 }
 // continent print 
 std::ostream& operator<<(std::ostream& outs, const Continent& c) {
-	outs << "Continent Name: " << c.name << ", Territories: " << c.territories.size();
+	outs << "Continent Name: " << c.name << ", Bonus: " << c.bonusValue << ", Territories: " << c.territories.size();
 	return outs;
 }
 // continent gets name
 std::string Continent::getName() const {return name;}
+// ===== A3 CHANGE: Getter for bonus value =====
+int Continent::getBonusValue() const { return bonusValue; }
+// ===== END A3 CHANGE =====
 // continent gets vector of territories
 const std::vector<Territory*>& Continent::getTerritories() const {return territories;}
 // continent adds territory to continents vectors
@@ -151,7 +160,9 @@ Map::Map(const Map& m)
             continue;
         }
 
-        Continent* newContinent = new Continent(oldContinent->getName());
+        // ===== A3 CHANGE: Copy with bonus value =====
+        Continent* newContinent = new Continent(oldContinent->getName(), oldContinent->getBonusValue());
+        // ===== END A3 CHANGE =====
         continents.push_back(newContinent);
 
         oldContinents.push_back(oldContinent);
@@ -273,7 +284,9 @@ Map& Map::operator=(const Map& m)
             continue;
         }
 
-        Continent* newContinent = new Continent(oldContinent->getName());
+        // ===== A3 CHANGE: Copy with bonus value =====
+        Continent* newContinent = new Continent(oldContinent->getName(), oldContinent->getBonusValue());
+        // ===== END A3 CHANGE =====
         continents.push_back(newContinent);
 
         oldContinents.push_back(oldContinent);
@@ -735,7 +748,13 @@ Map* MapLoader::loadMap(const std::string& filename) const {
                 armyCount += line[i++];
 
             if (!name.empty()) {
-                Continent* c = new Continent(name);
+                // ===== A3 CHANGE: Parse and store bonus value =====
+                int bonus = 0;
+                if (!armyCount.empty()) {
+                    bonus = std::stoi(armyCount);
+                }
+                Continent* c = new Continent(name, bonus);
+                // ===== END A3 CHANGE =====
                 newMap->addContinent(c);
                 continentById.push_back(c);
             }
@@ -843,4 +862,3 @@ std::ostream& operator<<(std::ostream& os, const MapLoader& ml) {
     os << "";
     return os;
 }
-

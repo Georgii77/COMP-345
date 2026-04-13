@@ -44,16 +44,24 @@ class Continent {
 public:
     Continent();
     Continent(const std::string& name);
+    // ===== A3 CHANGE: Constructor with bonus value =====
+    Continent(const std::string& name, int bonusValue);
+    // ===== END A3 CHANGE =====
     Continent(const Continent& c);
     Continent& operator=(const Continent& c);
     std::string getName() const;
+    // ===== A3 CHANGE: Getter for bonus value =====
+    int getBonusValue() const;
+    // ===== END A3 CHANGE =====
     const std::vector<Territory*>& getTerritories() const;
     void addTerritory(Territory* t);
     friend std::ostream& operator<<(std::ostream& os, const Continent& c);
 
 private:
-
     std::string name;
+    // ===== A3 CHANGE: Store continent bonus =====
+    int bonusValue;
+    // ===== END A3 CHANGE =====
     std::vector<Territory*> territories; 
 };
 
@@ -73,11 +81,8 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Map& m);
 
 private:
-
-
     std::vector<Territory*> territories; 
     std::vector<Continent*> continents;         
-
 };
 
 class MapLoader {

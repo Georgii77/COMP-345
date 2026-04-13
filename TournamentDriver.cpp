@@ -21,7 +21,7 @@ int main() {
     // Parsed twice: once to show validation, then engine parses again internally.
     TournamentParams params;
     const std::string cmd =
-        "tournament -M spain.map -P Aggressive,Benevolent,Neutral -G 1 -D 15";
+        "tournament -M spain.map -P Aggressive,Cheater,Neutral -G 1 -D 30";
 
     std::cout << "Command line:\n  " << cmd << "\n\n";
 

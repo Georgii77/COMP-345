@@ -464,7 +464,7 @@ void GameEngine::reinforcementPhase() {
 
         for (Continent* c : gameMap->getContinents()) {
             if (playerControlsContinent(p, c)) {
-                // reinforcementArmies += c->getBonusValue();
+                reinforcementArmies += c->getBonusValue();
             }
         }
 
