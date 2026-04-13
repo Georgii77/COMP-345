@@ -37,7 +37,7 @@ void testPlayers() {
     }
 
     cout << "\nIssuing a Deploy order to Player 1..." << endl;
-    Order* deployOrder = new Deploy(5, t1);
+    Order* deployOrder = new Deploy(p1, 5, t1);
     p1->issueOrder(deployOrder);
     cout << *p1 << endl;
 
@@ -51,7 +51,7 @@ void testPlayers() {
     // Verify Independence (Deep Copy check)
     // if we add an order to P1, P2 and P3's order list shouldn't change
     cout << "\nAdding an order to Player 1 only..." << endl;
-    p1->issueOrder(new Bomb(t2));
+    p1->issueOrder(new Bomb(p1, t2));
 
     cout << "Player 1 (should have 2 orders):" << endl << *p1 << endl;
     cout << "Player 2 (should still have 1 order - Deep Copy check):" << endl << *p2 << endl;
